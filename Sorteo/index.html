@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteo Home Office - Henri Barrett</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0a;--surface:#181818;--surface2:#222222;--accent:#ccff00;--accent2:#ff6b00;--warn:#ff6b00;--danger:#ff4444;--tl:#a855f7;--text:#ffffff;--muted:#666666;--border:#2a2a2a;--radius:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 20px 60px;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:980px;margin:0 auto;}
+.badge{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-family:"Space Grotesk",sans-serif;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;}
+.badge::before{content:"";display:inline-block;width:24px;height:2px;background:var(--accent);}
+h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(24px,4.5vw,44px);font-weight:700;line-height:1.05;letter-spacing:-.01em;text-transform:uppercase;}
+h1 span{color:var(--accent);}
+.sub{color:var(--muted);font-size:14px;margin-top:8px;}
+/* AREA TABS */
+.area-tabs-bar{margin:20px 0 0;}
+.area-tabs-label{font-family:"Space Grotesk",sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block;}
+.area-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
+.area-tab{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:11px;letter-spacing:.04em;border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;}
+.area-tab:hover{border-color:var(--accent);color:var(--accent);}
+.area-tab.active{background:var(--accent);color:#0e0e12;border-color:var(--accent);}
+/* PERIOD */
+.period-bar{display:flex;align-items:center;gap:12px;margin:20px 0 0;flex-wrap:wrap;}
+.period-label{font-family:"Space Grotesk",sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.week-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.week-tab{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;position:relative;}
+.week-tab.active{background:var(--accent);color:#0e0e12;border-color:var(--accent);}
+.week-tab.done{border-color:rgba(200,240,96,.3);color:rgba(200,240,96,.6);}
+.btn-reset{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:11px;background:transparent;border:1px solid rgba(240,96,96,.3);color:var(--danger);border-radius:8px;padding:5px 12px;cursor:pointer;margin-left:auto;}
+/* STEPS */
+.steps{display:flex;gap:8px;margin:16px 0 0;flex-wrap:wrap;}
+.step-btn{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:11px;letter-spacing:.05em;border:1px solid var(--border);border-radius:99px;padding:5px 14px;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;}
+.step-btn.current{background:var(--accent);color:#0e0e12;border-color:var(--accent);}
+/* PANELS */
+.panel{display:none;margin-top:24px;animation:fadeIn .3s ease-out;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.section-title{font-family:"Space Grotesk",sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+/* WEEK SETUP */
+.week-setup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.week-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+.week-row label{font-size:13px;font-weight:500;min-width:120px;}
+input[type="date"]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:"DM Sans",sans-serif;font-size:13px;outline:none;color-scheme:dark;}
+.week-preview{font-size:12px;color:var(--muted);margin-top:2px;}
+/* ABSENCE */
+.absence-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;}
+.absence-header{display:grid;grid-template-columns:190px repeat(5,1fr);background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 14px;font-family:"Space Grotesk",sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);gap:4px;}
+.absence-row{display:grid;grid-template-columns:190px repeat(5,1fr);padding:9px 14px;border-bottom:1px solid var(--border);align-items:center;gap:4px;}
+.absence-row:last-child{border-bottom:none;}
+.absence-row.special-row{grid-template-columns:1fr;opacity:.45;}
+.person-cell{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.day-check{display:flex;justify-content:center;}
+input[type="checkbox"]{width:17px;height:17px;cursor:pointer;accent-color:var(--danger);}
+.tag{font-size:9px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:2px 6px;text-transform:uppercase;}
+.tag-always{background:rgba(200,240,96,.15);color:var(--accent);}
+.tag-excl{background:rgba(240,96,96,.1);color:var(--danger);}
+.tag-tl{background:rgba(168,85,247,.15);color:var(--tl);}
+.tag-dir{background:rgba(240,192,96,.15);color:var(--warn);}
+/* ALERTS */
+.alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;}
+.alert-warn{background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.2);color:var(--warn);}
+.alert-info{background:rgba(255,107,0,.07);border:1px solid rgba(255,107,0,.15);color:var(--accent2);}
+.alert-tl{background:rgba(192,96,240,.08);border:1px solid rgba(192,96,240,.2);color:var(--tl);}
+/* BUTTONS */
+.btn-primary{cursor:pointer;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;letter-spacing:.04em;border:none;border-radius:8px;padding:11px 26px;transition:all .15s;background:var(--accent);color:#0e0e12;}
+.btn-primary:hover{background:#d4ff1a;}
+.btn-secondary{cursor:pointer;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 18px;transition:all .15s;}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-send{cursor:pointer;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:13px;border:none;border-radius:8px;padding:12px 28px;transition:all .15s;background:var(--accent2);color:#0e0e12;}
+.btn-send:hover{background:#78d4f5;}
+.btn-send:disabled,.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+/* CONFIRM BOX */
+.confirm-box{margin-top:20px;padding:20px;background:rgba(255,107,0,.04);border:1px solid rgba(255,107,0,.15);border-radius:var(--radius);}
+/* CALENDAR */
+.calendar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px;}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 12px;position:relative;overflow:hidden;}
+.day-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;}
+.day-card.has-people::before{opacity:1;}
+.day-card.is-monday::before{background:var(--accent2);}
+.day-card.is-friday::before{background:var(--warn);}
+.day-label{font-family:"Space Grotesk",sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.day-date{font-family:"Space Grotesk",sans-serif;font-size:19px;font-weight:800;margin-bottom:12px;}
+.person-tag{display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:12px;font-weight:500;}
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Space Grotesk",sans-serif;font-size:9px;font-weight:800;flex-shrink:0;}
+.avatar.is-tl{box-shadow:0 0 0 2px var(--tl);}
+.avatar.is-dir{box-shadow:0 0 0 2px var(--warn);}
+.always-note{display:flex;align-items:center;gap:7px;padding:6px 9px;background:rgba(200,240,96,.06);border:1px dashed rgba(200,240,96,.2);border-radius:7px;margin-bottom:8px;font-size:11px;color:var(--accent);}
+.no-slots{color:var(--muted);font-size:11px;font-style:italic;margin-top:4px;}
+/* SUMMARY */
+.summary-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;}
+.summary-item{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+.summary-count{font-family:"Space Grotesk",sans-serif;font-size:18px;font-weight:800;min-width:22px;text-align:center;}
+.summary-name{font-size:12px;font-weight:500;line-height:1.3;}
+.excl-note{margin-top:12px;font-size:12px;color:var(--muted);padding:9px 13px;background:rgba(240,96,96,.05);border:1px solid rgba(240,96,96,.1);border-radius:8px;}
+/* OVERVIEW */
+.period-overview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.ov-header{font-family:"Space Grotesk",sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 6px;}
+.ov-name{font-weight:500;padding:5px 6px;display:flex;align-items:center;gap:6px;}
+.ov-cell{padding:4px;display:flex;justify-content:center;align-items:center;gap:3px;flex-wrap:wrap;min-height:28px;}
+.ov-pill{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;text-transform:uppercase;}
+.ov-mon{background:rgba(255,107,0,.2);color:var(--accent2);}
+.ov-fri{background:rgba(240,192,96,.2);color:var(--warn);}
+.ov-mid{background:rgba(200,240,96,.12);color:var(--accent);}
+.ov-none{color:var(--border);font-size:10px;}
+/* EXPORT */
+.export-section{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;}
+#export-text{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;font-family:"Courier New",monospace;color:var(--text);line-height:1.8;white-space:pre-wrap;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="margin-bottom:4px;">
+  <div class="badge" id="area-badge">Henri Barrett</div>
+  <h1>Sorteo <span>Home Office</span></h1>
+  <p class="sub" id="area-sub">Selecciona tu area para comenzar</p>
+</header>
+
+<div class="area-tabs-bar">
+  <span class="area-tabs-label">Area:</span>
+  <div class="area-tabs" id="area-tabs"></div>
+</div>
+
+<div class="period-bar">
+  <span class="period-label">Periodo:</span>
+  <div class="week-tabs" id="week-tabs"></div>
+  <button class="btn-reset" onclick="resetPeriod()">Nuevo periodo</button>
+</div>
+
+<div class="steps">
+  <button class="step-btn" id="sb-1" onclick="goStep(1)">1 Semana y ausencias</button>
+  <button class="step-btn" id="sb-2" onclick="goStep(2)">2 Resultado</button>
+  <button class="step-btn" id="sb-3" onclick="goStep(3)">3 Vista periodo</button>
+  <button class="step-btn" id="sb-4" onclick="goStep(4)">4 Reporte RRHH</button>
+</div>
+
+<div class="panel" id="panel-1">
+  <div class="week-setup">
+    <div class="section-title">Semana a programar</div>
+    <div class="week-row">
+      <label>Lunes de la semana</label>
+      <input type="date" id="week-start" onchange="updateWeekDates()">
+    </div>
+    <div class="week-preview" id="week-preview"></div>
+  </div>
+  <div id="alerts-box" class="alerts"></div>
+  <div class="section-title">Ausencias esta semana</div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Marca los dias en que cada persona <strong style="color:var(--text)">no estara disponible.</strong></p>
+  <div class="absence-table">
+    <div class="absence-header">
+      <div>Persona</div>
+      <div id="col-0">Lun</div><div id="col-1">Mar</div><div id="col-2">Mie</div><div id="col-3">Jue</div><div id="col-4">Vie</div>
+    </div>
+    <div id="absence-rows"></div>
+  </div>
+  <button class="btn-primary" onclick="runDraw()">Generar sorteo</button>
+</div>
+
+<div class="panel" id="panel-2">
+  <div id="result-alerts" class="alerts"></div>
+  <div class="calendar" id="calendar"></div>
+  <div class="summary-panel">
+    <div class="section-title">Dias HO esta semana</div>
+    <div class="summary-grid" id="summary-grid"></div>
+    <div class="excl-note" id="excl-note"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="runDraw()">Re-sortear</button>
+    <button class="btn-secondary" onclick="goStep(1)">Editar ausencias</button>
+  </div>
+  <div class="confirm-box">
+    <div class="section-title" style="color:var(--accent2);">Confirmar y notificar</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Cuando estes conforme, confirma el sorteo. Se guardara la semana, se agendara en Google Calendar, se enviara el reporte a Renzo y los recordatorios de Buk a cada persona.</p>
+    <button class="btn-send" id="btn-confirmar" onclick="confirmarYEnviar()">Confirmar sorteo y enviar notificaciones</button>
+    <p id="confirm-status" style="font-size:12px;margin-top:10px;display:none;"></p>
+  </div>
+</div>
+
+<div class="panel" id="panel-3">
+  <div class="period-overview">
+    <div class="section-title">Distribucion lunes y viernes - periodo completo</div>
+    <div id="overview-grid"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-secondary" onclick="goStep(2)">Volver al sorteo</button>
+    <button class="btn-secondary" onclick="goStep(4)">Ver reporte RRHH</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-4">
+  <div class="export-section">
+    <div class="section-title">Reporte para Recursos Humanos</div>
+    <div id="export-text"></div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="copyRRHH()">Copiar texto</button>
+      <button class="btn-secondary" onclick="goStep(2)">Ver calendario</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+var APPS_SCRIPT_URL = "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT";
+var DAYS  = ["Lunes","Martes","Miercoles","Jueves","Viernes"];
+var SHORT = ["Lun","Mar","Mie","Jue","Vie"];
+var MONTHS= ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var COLORS= ["#c8f060","#60c8f0","#f060c8","#f0c860","#c860f0","#60f0c8","#f08060","#8060f0","#60f080","#f06080","#a060f0","#60f0a0"];
+
+<script src="team-data.js"></script>
+
+var currentArea = null;
+var TEAM = [];
+var ELIGIBLE = [];
+var periodHistory = [];
+var currentWeekIdx = 0;
+var currentSchedule = null;
+var weekDates = [];
+var weekLabel = "";
+
+function buildAreaTabs() {
+  var tabs = document.getElementById("area-tabs");
+  tabs.innerHTML = "";
+  Object.keys(AREAS_DATA).forEach(function(key) {
+    var btn = document.createElement("button");
+    btn.className = "area-tab";
+    btn.id = "tab-" + key.replace(/\s/g,"_");
+    btn.textContent = key;
+    btn.onclick = function() { selectArea(key); };
+    tabs.appendChild(btn);
+  });
+}
+
+function selectArea(key) {
+  currentArea = key;
+  var area = AREAS_DATA[key];
+  TEAM = area.team;
+  ELIGIBLE = TEAM.filter(function(p) { return p.canHO && !p.always; });
+  periodHistory = [];
+  try { periodHistory = JSON.parse(localStorage.getItem("ho_" + key) || "[]"); } catch(e) {}
+  currentWeekIdx = periodHistory.length;
+  currentSchedule = null;
+  document.getElementById("area-badge").textContent = key;
+  document.getElementById("area-sub").textContent = area.slots + " cupos diarios - " + TEAM.length + " personas";
+  document.querySelectorAll(".area-tab").forEach(function(b) { b.classList.remove("active"); });
+  var activeTab = document.getElementById("tab-" + key.replace(/\s/g,"_"));
+  if (activeTab) activeTab.classList.add("active");
+  init();
+}
+
+function savePeriod() {
+  try { localStorage.setItem("ho_" + currentArea, JSON.stringify(periodHistory)); } catch(e) {}
+}
+
+function buildPeriodStats() {
+  var stats = {};
+  ELIGIBLE.forEach(function(p) { stats[p.name] = {total:0,mon:0,fri:0,lastMonWeek:-1,lastFriWeek:-1}; });
+  periodHistory.forEach(function(week, wi) {
+    if (!week.confirmed) return;
+    [0,1,2,3,4].forEach(function(di) {
+      (week.schedule[di]||[]).forEach(function(name) {
+        if (!stats[name]) return;
+        stats[name].total++;
+        if (di===0) { stats[name].mon++; stats[name].lastMonWeek=wi; }
+        if (di===4) { stats[name].fri++; stats[name].lastFriWeek=wi; }
+      });
+    });
+  });
+  return stats;
+}
+
+function pad(n) { return String(n).padStart(2,"0"); }
+
+function getNextMonday() {
+  var d = new Date();
+  var day = d.getDay();
+  d.setDate(d.getDate() + (day===0 ? 1 : 8-day));
+  return d;
+}
+
+function init() {
+  renderWeekTabs();
+  buildAbsenceRows();
+  var defDate;
+  if (periodHistory.length > 0 && periodHistory[periodHistory.length-1].weekDates) {
+    var last = new Date(periodHistory[periodHistory.length-1].weekDates[4]);
+    last.setDate(last.getDate()+3);
+    defDate = last;
+  } else {
+    defDate = getNextMonday();
+  }
+  document.getElementById("week-start").value = defDate.getFullYear()+"-"+pad(defDate.getMonth()+1)+"-"+pad(defDate.getDate());
+  updateWeekDates();
+  renderAlerts();
+  goStep(1);
+}
+
+function resetPeriod() {
+  if (!currentArea) return;
+  if (!confirm("Reiniciar el periodo completo de 5 semanas?")) return;
+  periodHistory = []; currentWeekIdx = 0; currentSchedule = null;
+  savePeriod(); init();
+}
+
+function renderWeekTabs() {
+  var tabs = document.getElementById("week-tabs");
+  tabs.innerHTML = "";
+  for (var i = 0; i < 5; i++) {
+    var btn = document.createElement("button");
+    var cls = "week-tab";
+    if (i === currentWeekIdx) cls += " active";
+    if (periodHistory[i] && periodHistory[i].confirmed) cls += " done";
+    btn.className = cls;
+    btn.textContent = "Sem "+(i+1);
+    (function(idx) {
+      if (periodHistory[idx] && periodHistory[idx].confirmed) {
+        btn.onclick = function() { viewConfirmedWeek(idx); };
+      } else if (idx <= periodHistory.length) {
+        btn.onclick = function() { currentWeekIdx=idx; renderWeekTabs(); renderAlerts(); goStep(1); };
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.3";
+        btn.style.cursor = "not-allowed";
+      }
+    })(i);
+    tabs.appendChild(btn);
+  }
+}
+
+function viewConfirmedWeek(i) {
+  var week = periodHistory[i];
+  if (!week) return;
+  currentWeekIdx = i;
+  currentSchedule = week.schedule;
+  weekLabel = week.weekLabel;
+  weekDates = week.weekDates.map(function(d) { return new Date(d); });
+  renderWeekTabs();
+  renderCalendar(currentSchedule);
+  renderSummary(currentSchedule);
+  renderExport(currentSchedule);
+  goStep(2);
+}
+
+function updateWeekDates() {
+  var val = document.getElementById("week-start").value;
+  if (!val) return;
+  var base = new Date(val+"T12:00:00");
+  weekDates = DAYS.map(function(_,i) { var d=new Date(base); d.setDate(base.getDate()+i); return d; });
+  weekLabel = weekDates[0].getDate()+" al "+weekDates[4].getDate()+" de "+MONTHS[weekDates[4].getMonth()]+" "+weekDates[4].getFullYear();
+  document.getElementById("week-preview").textContent = "Semana: "+weekLabel;
+  DAYS.forEach(function(_,i) {
+    var col = document.getElementById("col-"+i);
+    if (col) col.textContent = SHORT[i]+" "+weekDates[i].getDate();
+  });
+  renderAlerts();
+}
+
+function renderAlerts() {
+  var box = document.getElementById("alerts-box");
+  if (!box || !ELIGIBLE.length) return;
+  var stats = buildPeriodStats();
+  var alerts = [];
+  var confirmed = periodHistory.filter(function(w){return w.confirmed;}).length;
+  if (confirmed===0) alerts.push({type:"info",msg:"Primera semana del periodo. El sistema aprendera quien ya tuvo lunes y viernes para rotar equitativamente."});
+  var prev = periodHistory[currentWeekIdx-1];
+  if (prev && prev.confirmed) {
+    var tlPrevFri = (prev.schedule[4]||[]).filter(function(n){return TEAM.find(function(p){return p.name===n&&p.isTeamLead;});});
+    if (tlPrevFri.length>0) alerts.push({type:"tl",msg:"Team Leads con viernes la semana anterior: "+tlPrevFri.join(", ")+". El sorteo evitara asignarles el lunes."});
+  }
+  if (confirmed>=2) {
+    var noFri = ELIGIBLE.filter(function(p){return stats[p.name].fri===0;}).map(function(p){return p.name;});
+    if (noFri.length>0) alerts.push({type:"warn",msg:"Sin viernes aun: "+noFri.join(", ")+". El sorteo los priorizara."});
+    var noMon = ELIGIBLE.filter(function(p){return stats[p.name].mon===0;}).map(function(p){return p.name;});
+    if (noMon.length>0) alerts.push({type:"warn",msg:"Sin lunes aun: "+noMon.join(", ")+". El sorteo los priorizara."});
+  }
+  box.innerHTML = alerts.map(function(a){return '<div class="alert alert-'+a.type+'"><span>'+a.msg+'</span></div>';}).join("");
+}
+
+function buildAbsenceRows() {
+  var container = document.getElementById("absence-rows");
+  container.innerHTML = "";
+  var sorted = ELIGIBLE.slice().sort(function(a,b){
+    var aRank = a.isDirector?0:a.isTeamLead?1:2;
+    var bRank = b.isDirector?0:b.isTeamLead?1:2;
+    return aRank-bRank;
+  });
+  sorted.forEach(function(person) {
+    var color = getColor(person.name);
+    var row = document.createElement("div");
+    row.className = "absence-row";
+    var roleTag = '';
+    if (person.isDirector) roleTag = ' <span class="tag tag-dir">D</span>';
+    else if (person.isTeamLead) roleTag = ' <span class="tag tag-tl">TL</span>';
+    var html = '<div class="person-cell"><div class="dot" style="background:'+color+'"></div>'+person.name+roleTag+'</div>';
+    DAYS.forEach(function(_,i) { html += '<div class="day-check"><input type="checkbox" id="abs-'+sid(person.name)+'-'+i+'"></div>'; });
+    row.innerHTML = html;
+    container.appendChild(row);
+  });
+  TEAM.filter(function(p){return p.always;}).forEach(function(p) {
+    var r = document.createElement("div"); r.className="absence-row special-row";
+    r.innerHTML='<div class="person-cell"><div class="dot" style="background:var(--accent)"></div>'+p.name+' <span class="tag tag-always">HO permanente</span></div>';
+    container.appendChild(r);
+  });
+  TEAM.filter(function(p){return !p.canHO;}).forEach(function(p) {
+    var r = document.createElement("div"); r.className="absence-row special-row";
+    r.innerHTML='<div class="person-cell"><div class="dot" style="background:#333"></div>'+p.name+' <span class="tag tag-excl">No aplica HO</span></div>';
+    container.appendChild(r);
+  });
+}
+
+function getAbsences() {
+  var abs = {};
+  ELIGIBLE.forEach(function(p) {
+    abs[p.name] = [];
+    DAYS.forEach(function(_,i) {
+      var cb = document.getElementById("abs-"+sid(p.name)+"-"+i);
+      if (cb && cb.checked) abs[p.name].push(i);
+    });
+  });
+  return abs;
+}
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length-1; i>0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+
+function runDraw() {
+  if (!currentArea) { alert("Primero selecciona un area."); return; }
+  var absences = getAbsences();
+  var slots = AREAS_DATA[currentArea].slots;
+  var pairExcl = AREAS_DATA[currentArea].pairExclusions || [];
+  var restricted = ["Ronald Dominguez","Diego Cieza","Olenka Venegas","Josue Sanchez"];
+
+  function isAvailable(name,di) { return (absences[name]||[]).indexOf(di)===-1; }
+
+  function isPairBlocked(name, picks) {
+    return pairExcl.some(function(pair) {
+      return pair.indexOf(name)!==-1 && picks.some(function(p){ return pair.indexOf(p)!==-1 && p!==name; });
+    });
+  }
+
+  function maxDays(name) { return restricted.indexOf(name)!==-1 ? 1 : 2; }
+
+  var eligibleForWeek = ELIGIBLE.filter(function(p){
+    return [0,1,2,3,4].some(function(di){ return isAvailable(p.name,di); });
+  });
+
+  var schedule, hoCount, assignedDays;
+  for (var attempt=0; attempt<500; attempt++) {
+    hoCount = {};
+    assignedDays = {};
+    ELIGIBLE.forEach(function(p){ hoCount[p.name]=0; assignedDays[p.name]=[]; });
+    schedule = {};
+    DAYS.forEach(function(_,di) {
+      var avail = ELIGIBLE.filter(function(p){return isAvailable(p.name,di);}).map(function(p){return p.name;});
+      var pool = avail.filter(function(n){
+        if (hoCount[n]>=maxDays(n)) return false;
+        // quien ya tiene un dia no puede tener el dia anterior o siguiente (consecutivos)
+        if (hoCount[n]>0 && (assignedDays[n].indexOf(di-1)!==-1 || assignedDays[n].indexOf(di+1)!==-1)) return false;
+        return true;
+      });
+      pool = shuffle(pool);
+      var picks = [];
+      for (var pi=0; pi<pool.length && picks.length<slots; pi++) {
+        if (!isPairBlocked(pool[pi], picks)) picks.push(pool[pi]);
+      }
+      picks.forEach(function(n){ hoCount[n]++; assignedDays[n].push(di); });
+      schedule[di] = picks;
+    });
+    if (eligibleForWeek.every(function(p){ return hoCount[p.name]>=1; })) break;
+  }
+
+  currentSchedule = schedule;
+  renderCalendar(schedule);
+  renderSummary(schedule);
+  renderExport(schedule);
+
+  var st = document.getElementById("confirm-status");
+  st.style.display="none";
+  var btn = document.getElementById("btn-confirmar");
+  btn.disabled=false;
+  btn.textContent="Confirmar sorteo y enviar notificaciones";
+  btn.style.background="";
+  btn.style.color="";
+
+  goStep(2);
+}
+
+function confirmarYEnviar() {
+  if (!currentSchedule) return;
+  var btn = document.getElementById("btn-confirmar");
+  var st  = document.getElementById("confirm-status");
+  btn.disabled = true;
+  btn.textContent = "Confirmando...";
+  st.style.display = "block";
+  st.style.color = "var(--muted)";
+  st.textContent = "Guardando semana...";
+
+  var entry = { weekLabel:weekLabel, weekDates:weekDates.map(function(d){return d.toISOString();}), schedule:currentSchedule, confirmed:true };
+  if (periodHistory[currentWeekIdx]) { periodHistory[currentWeekIdx]=entry; } else { periodHistory.push(entry); }
+  currentWeekIdx = Math.min(periodHistory.length, 4);
+  savePeriod();
+  renderWeekTabs();
+
+  if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT") {
+    var area = AREAS_DATA[currentArea];
+    var areaEmails = {};
+    area.team.forEach(function(p){areaEmails[p.name]=p.email;});
+    var confirmedCount = periodHistory.filter(function(w){return w.confirmed;}).length;
+    var days = DAYS.map(function(dayName,i){
+      return {dayName:dayName, date:weekDates[i]?weekDates[i].toISOString().split("T")[0]:"", people:currentSchedule[i]||[]};
+    });
+    var payload = {weekLabel:weekLabel,weekNumber:confirmedCount,areaName:currentArea,directorEmail:area.directorEmail,areaEmails:areaEmails,days:days};
+    fetch(APPS_SCRIPT_URL, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),mode:"no-cors"})
+      .then(function() {
+        btn.textContent="Listo";
+        btn.style.background="var(--accent)";
+        btn.style.color="#0e0e12";
+        st.style.color="var(--accent)";
+        st.textContent="Semana confirmada. Calendar agendado, reporte a Renzo y recordatorios de Buk enviados.";
+      })
+      .catch(function(err) {
+        btn.textContent="Guardado - error en notificaciones";
+        st.style.color="var(--warn)";
+        st.textContent="La semana se guardo pero hubo un error al enviar las notificaciones.";
+        console.error(err);
+      });
+  } else {
+    btn.textContent="Semana confirmada";
+    btn.style.background="var(--accent)";
+    btn.style.color="#0e0e12";
+    st.style.color="var(--warn)";
+    st.textContent="Semana guardada. Configura APPS_SCRIPT_URL para activar las notificaciones.";
+  }
+  renderPeriodOverview();
+}
+
+function renderCalendar(schedule) {
+  var cal = document.getElementById("calendar");
+  cal.innerHTML = "";
+  var alwaysPeople = TEAM.filter(function(p){return p.always;});
+  DAYS.forEach(function(day,i) {
+    var people = schedule[i]||[];
+    var dateStr = weekDates.length ? weekDates[i].getDate()+" "+MONTHS[weekDates[i].getMonth()].slice(0,3) : day;
+    var card = document.createElement("div");
+    card.className = "day-card"+(people.length?" has-people":"")+(i===0?" is-monday":"")+(i===4?" is-friday":"");
+    var html = '<div class="day-label">'+day+'</div><div class="day-date">'+dateStr+'</div>';
+    alwaysPeople.forEach(function(p){
+      html += '<div class="always-note"><span>'+p.name+'</span></div>';
+    });
+    people.forEach(function(name) {
+      var c=getColor(name);
+      var pData=TEAM.find(function(p){return p.name===name;});
+      var ringClass = pData&&pData.isDirector ? " is-dir" : pData&&pData.isTeamLead ? " is-tl" : "";
+      html += '<div class="person-tag"><div class="avatar'+ringClass+'" style="background:'+c+';color:#0e0e12">'+initials(name)+'</div><span>'+name+'</span></div>';
+    });
+    if (!people.length) html += '<div class="no-slots">Sin asignaciones</div>';
+    card.innerHTML = html;
+    cal.appendChild(card);
+  });
+}
+
+function renderSummary(schedule) {
+  var grid = document.getElementById("summary-grid");
+  grid.innerHTML = "";
+  var hoCount = {};
+  ELIGIBLE.forEach(function(p){hoCount[p.name]={total:0,mon:false,fri:false};});
+  DAYS.forEach(function(_,i){
+    (schedule[i]||[]).forEach(function(name){
+      if(!hoCount[name])return;
+      hoCount[name].total++;
+      if(i===0)hoCount[name].mon=true;
+      if(i===4)hoCount[name].fri=true;
+    });
+  });
+  var sorted = ELIGIBLE.slice().sort(function(a,b){return (hoCount[b.name]?hoCount[b.name].total:0)-(hoCount[a.name]?hoCount[a.name].total:0);});
+  sorted.forEach(function(p) {
+    var c=getColor(p.name); var h=hoCount[p.name];
+    var badges=(h.mon?'<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(255,107,0,.2);color:var(--accent2)">L</span>':"")+(h.fri?'<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(240,192,96,.2);color:var(--warn)">V</span>':"");
+    grid.innerHTML += '<div class="summary-item"><div class="summary-count" style="color:'+c+'">'+h.total+'</div><div><div class="summary-name">'+p.name+'</div><div style="display:flex;gap:3px;margin-top:2px;">'+badges+'</div></div></div>';
+  });
+  var always = TEAM.filter(function(p){return p.always;});
+  always.forEach(function(p){grid.innerHTML+='<div class="summary-item"><div class="summary-count" style="color:var(--accent)">5</div><div class="summary-name" style="color:var(--accent)">'+p.name+' (permanente)</div></div>';});
+  var excl = TEAM.filter(function(p){return !p.canHO;});
+  document.getElementById("excl-note").innerHTML = excl.length ? "No participan en HO: "+excl.map(function(p){return p.name;}).join(", ")+"." : "";
+}
+
+function renderPeriodOverview() {
+  var container = document.getElementById("overview-grid");
+  var weeks = periodHistory.filter(function(w){return w.confirmed;});
+  if (!weeks.length) { container.innerHTML='<p style="color:var(--muted);font-size:13px">Aun no hay semanas confirmadas.</p>'; return; }
+  var data = {};
+  ELIGIBLE.forEach(function(p){data[p.name]=[];});
+  weeks.forEach(function(week) {
+    ELIGIBLE.forEach(function(p) {
+      var days=[];
+      [0,1,2,3,4].forEach(function(di){
+        if((week.schedule[di]||[]).indexOf(p.name)!==-1){
+          days.push(di===0?"mon":di===4?"fri":"mid");
+        }
+      });
+      data[p.name].push(days);
+    });
+  });
+  var cols = weeks.length;
+  var wh = weeks.map(function(_,i){return '<div class="ov-header" style="text-align:center">Sem '+(i+1)+'</div>';}).join("");
+  var html = '<div style="display:grid;grid-template-columns:180px repeat('+cols+',1fr);gap:6px;"><div class="ov-header">Persona</div>'+wh;
+  ELIGIBLE.forEach(function(p) {
+    var c=getColor(p.name);
+    html += '<div class="ov-name"><div class="dot" style="background:'+c+'"></div>'+p.name+'</div>';
+    data[p.name].forEach(function(days) {
+      if(!days.length){html+='<div class="ov-cell"><span class="ov-none">-</span></div>';return;}
+      var pills=days.map(function(d){
+        if(d==="mon")return '<span class="ov-pill ov-mon">L</span>';
+        if(d==="fri")return '<span class="ov-pill ov-fri">V</span>';
+        return '<span class="ov-pill ov-mid">.</span>';
+      }).join("");
+      html+='<div class="ov-cell">'+pills+'</div>';
+    });
+  });
+  html += "</div>";
+  container.innerHTML = html;
+}
+
+function renderExport(schedule) {
+  var confirmed = periodHistory.filter(function(w){return w.confirmed;}).length;
+  var dash = "--------------------------------------------------";
+  var nl = "\n";
+  var t = "PROGRAMA HOME OFFICE - Semana del "+weekLabel+nl;
+  t += "Area: "+currentArea+" (Semana "+(confirmed+1)+" de 5)"+nl;
+  t += dash+nl+nl;
+  var always = TEAM.filter(function(p){return p.always;});
+  always.forEach(function(p){t+="- "+p.name+" - HO permanente"+nl;});
+  if(always.length) t+=nl;
+  DAYS.forEach(function(day,i){
+    var dateStr = weekDates.length ? day+" "+weekDates[i].getDate()+"/"+pad(weekDates[i].getMonth()+1) : day;
+    var label = i===0?" [LUNES]":i===4?" [VIERNES]":"";
+    var people = schedule[i]||[];
+    t += dateStr+label+":"+nl;
+    if(people.length){ people.forEach(function(p){t+="  - "+p+nl;}); }
+    else { t+="  (sin asignaciones)"+nl; }
+    t += nl;
+  });
+  var excl = TEAM.filter(function(p){return !p.canHO;});
+  if(excl.length) t+=dash+nl+"No participan en HO: "+excl.map(function(p){return p.name;}).join(", ")+".";
+  document.getElementById("export-text").textContent = t;
+}
+
+function goStep(n) {
+  [1,2,3,4].forEach(function(i){
+    document.getElementById("panel-"+i).classList.toggle("active",i===n);
+    var btn=document.getElementById("sb-"+i);
+    btn.classList.remove("current");
+    if(i===n) btn.classList.add("current");
+  });
+  if(n===3) renderPeriodOverview();
+}
+
+function getColor(name){var idx=ELIGIBLE.findIndex(function(p){return p.name===name;});return COLORS[idx>=0?idx%COLORS.length:0];}
+function initials(name){return name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase();}
+function sid(name){return name.toLowerCase().replace(/[^a-z0-9]/g,"_");}
+function copyRRHH(){
+  navigator.clipboard.writeText(document.getElementById("export-text").textContent).then(function(){
+    var btn=event.target; var orig=btn.textContent;
+    btn.textContent="Copiado!"; setTimeout(function(){btn.textContent=orig;},2000);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", function() {
+  buildAreaTabs();
+  selectArea("Audiovisual");
+});
+</script>
+</body>
+</html>

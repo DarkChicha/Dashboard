@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henri Barrett — Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0A0A0A;
+    --white: #F5F4F0;
+    --lime: #CCFF00;
+    --red: #FF4D4D;
+    --yellow: #FFD166;
+    --teal: #00E5C8;
+    --orange: #FF8C42;
+    --purple: #C084FC;
+    --gray: #1A1A1A;
+    --gray2: #2E2E2E;
+    --muted: #666;
+  }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid #1a1a1a;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .header-brand { color: var(--white); }
+  .header-div   { color: var(--muted); }
+  .header-sub   { color: var(--muted); }
+  .header-pill {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--black);
+    background: var(--lime);
+    padding: 5px 12px;
+    border-radius: 99px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 40px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 24px;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 24px;
+    height: 2px;
+    background: var(--lime);
+  }
+
+  .hero h1 {
+    font-size: clamp(52px, 8vw, 100px);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--lime);
+    display: block;
+  }
+
+  .hero-desc {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .stat-item { }
+  .stat-num {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid #1a1a1a;
+    margin: 0 40px;
+  }
+
+  /* ── TOOLS SECTION ── */
+  .tools-section {
+    padding: 60px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1a1a1a;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2px;
+  }
+
+  /* ── TOOL CARD ── */
+  .tool-card {
+    background: var(--gray);
+    padding: 40px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border: none;
+    outline: none;
+  }
+  .tool-card:hover { background: var(--gray2); }
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--lime));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+  .tool-card:hover::before { transform: scaleX(1); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .card-index {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+  .card-arrow {
+    font-size: 20px;
+    color: var(--muted);
+    transition: color 0.2s, transform 0.2s;
+    line-height: 1;
+  }
+  .tool-card:hover .card-arrow {
+    color: var(--card-accent, var(--lime));
+    transform: translate(3px, -3px);
+  }
+
+  .card-icon {
+    font-size: 36px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .card-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .card-title span {
+    display: block;
+    color: var(--card-accent, var(--lime));
+  }
+
+  .card-desc {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 32px;
+    flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid #333;
+    border-radius: 99px;
+    color: #888;
+  }
+
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--card-accent, var(--lime));
+    padding: 10px 0;
+    border-top: 1px solid #2a2a2a;
+    width: 100%;
+    transition: gap 0.2s;
+  }
+  .tool-card:hover .card-cta { gap: 12px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 32px 40px;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-brand {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .footer-note {
+    font-size: 11px;
+    color: #333;
+  }
+
+  /* ── COMING SOON CARD ── */
+  .tool-card.coming {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .coming-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: #222;
+    color: #555;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 640px) {
+    .header { padding: 16px 20px; }
+    .hero   { padding: 48px 20px 40px; }
+    .tools-section { padding: 40px 20px; }
+    .tool-card { padding: 28px 24px; }
+    .divider { margin: 0 20px; }
+    .footer  { padding: 24px 20px; }
+    .hero-stats { gap: 24px; }
+  }
+
+  /* ── RESERVAS ── */
+  .reservas-section { padding: 60px 40px; max-width: 1100px; margin: 0 auto; }
+  .reservas-wrap { display: grid; grid-template-columns: 320px 1fr; gap: 2px; }
+  @media (max-width: 768px) { .reservas-wrap { grid-template-columns: 1fr; } .reservas-section { padding: 40px 20px; } }
+  .res-card { background: var(--gray); padding: 40px; }
+  .res-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase; line-height: 1.1; margin-bottom: 12px; }
+  .res-title span { display: block; color: var(--teal); }
+  .res-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+  .res-feature { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: #888; }
+  .res-feature::before { content: '→'; color: var(--teal); flex-shrink: 0; }
+  .f-group { margin-bottom: 18px; }
+  .f-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 7px; }
+  .f-input, .f-select, .f-textarea { width: 100%; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 11px 14px; color: var(--white); font-family: 'Space Grotesk', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; }
+  .f-input:focus, .f-select:focus, .f-textarea:focus { border-color: var(--teal); }
+  .f-textarea { resize: vertical; min-height: 76px; }
+  .f-select option { background: #1a1a1a; }
+  .f-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .shift-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 4px; }
+  .shift-btn { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: transparent; border: none; border-radius: 6px; padding: 10px; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+  .shift-btn.active { background: var(--teal); color: var(--black); }
+  .auth-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #222; }
+  .auth-chip { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--teal); }
+  .auth-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .btn-reservar { width: 100%; background: var(--teal); color: var(--black); border: none; border-radius: 8px; padding: 14px; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; margin-top: 6px; }
+  .btn-reservar:hover { background: #00c9b0; }
+  .btn-reservar:disabled { opacity: 0.4; cursor: not-allowed; }
+  .res-msg { font-size: 12px; margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
+  .res-msg.ok  { display: block; background: rgba(0,229,200,.07); border: 1px solid rgba(0,229,200,.2); color: var(--teal); }
+  .res-msg.err { display: block; background: rgba(255,77,77,.07); border: 1px solid rgba(255,77,77,.2); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <span class="header-brand">HENRI BARRETT</span>
+    <span class="header-div">|</span>
+    <span class="header-sub">TOOLKIT</span>
+  </div>
+  <div class="header-pill">CURIOSITY IS SEXY</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">SOCIAL CONTENT STUDIO · Agencia</div>
+  <h1>
+    Herramientas
+    <em>internas</em>
+  </h1>
+  <p class="hero-desc">
+    Apps diseñadas para el equipo. Rápidas, sin cuentas, sin pasos de más.
+  </p>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">03</div>
+      <div class="stat-label">Herramientas activas</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">13</div>
+      <div class="stat-label">Personas en el equipo</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:var(--lime)">∞</div>
+      <div class="stat-label">Guiones posibles</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- TOOLS -->
+<section class="tools-section">
+  <div class="section-label">Herramientas disponibles</div>
+
+  <div class="tools-grid">
+
+    <!-- CARD 1: Generador de Guiones -->
+    <a class="tool-card" href="/Guiones/" style="--card-accent: #CCFF00;">
+      <div class="card-top">
+        <span class="card-index">01</span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <span class="card-icon">🎬</span>
+      <div class="card-title">
+        Generador
+        <span>de Guión</span>
+      </div>
+      <p class="card-desc">
+        Estructura Maestra de Video Editorial. Genera guiones con 6 bloques: Contrato, Problema, Reencuadre, Insight, Resolución y Apertura. Elige duración, tono y referencias.
+      </p>
+      <div class="card-tags">
+        <span class="tag">Claude Sonnet 4</span>
+        <span class="tag">Gemini 2.5 Flash</span>
+        <span class="tag">30s · 1min</span>
+        <span class="tag">4 tonos</span>
+      </div>
+      <div class="card-cta">Abrir herramienta →</div>
+    </a>
+
+    <!-- CARD 2: Sorteo Home Office -->
+    <a class="tool-card" href="/Sorteo/index.html" style="--card-accent: #FFD166;">
+      <div class="card-top">
+        <span class="card-index">02</span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <span class="card-icon">🏠</span>
+      <div class="card-title">
+        Sorteo
+        <span>Home Office</span>
+      </div>
+      <p class="card-desc">
+        Sistema de rotación justa para el programa de Home Office del área. 2 cupos diarios, períodos de 5 semanas.
+      </p>
+      <div class="card-tags">
+        <span class="tag">5 semanas</span>
+        <span class="tag">13 personas</span>
+        <span class="tag">Rotación justa</span>
+        <span class="tag">RRHH export</span>
+      </div>
+      <div class="card-cta">Abrir herramienta →</div>
+    </a>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- RESERVAS -->
+<section class="reservas-section" id="reservas">
+  <div class="section-label">Sistema de reservas</div>
+  <div class="reservas-wrap">
+
+    <!-- INFO -->
+    <div class="res-card">
+      <span style="font-size:36px;display:block;margin-bottom:20px;">🖥️</span>
+      <div class="res-title">Reserva de<span>Isla de Edición</span></div>
+      <p class="res-desc">Reserva tu isla para el turno que necesitas. El evento se agrega automáticamente a Google Calendar del equipo.</p>
+      <div class="res-feature">Turno mañana: 08:00 – 15:00</div>
+      <div class="res-feature">Turno noche: 15:00 – 23:00</div>
+      <div class="res-feature">Confirmación inmediata en Calendar</div>
+    </div>
+
+    <!-- FORM -->
+    <div class="res-card">
+      <div class="auth-bar">
+        <div id="res-auth-label">
+          <span class="f-label" style="margin:0">Quién reserva</span>
+        </div>
+        <div id="g-btn"></div>
+      </div>
+
+      <form id="reserva-form" onsubmit="submitReserva(event)">
+        <div class="f-group">
+          <label class="f-label">Nombre</label>
+          <select class="f-select" id="res-nombre" onchange="onNameChange(this.value)">
+            <option value="">Selecciona tu nombre</option>
+          </select>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Fecha</label>
+          <input type="date" class="f-input" id="res-fecha">
+        </div>
+
+        <div class="f-row2">
+          <div class="f-group">
+            <label class="f-label">Código de Proyecto</label>
+            <input type="text" class="f-input" id="res-proyecto" placeholder="Ej: HB-2401">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Isla de Edición</label>
+            <input type="text" class="f-input" id="res-isla" placeholder="Ej: ISLA-03">
+          </div>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Turno</label>
+          <div class="shift-toggle">
+            <button type="button" class="shift-btn active" id="btn-man" onclick="setShift('manana')">☀️ Mañana</button>
+            <button type="button" class="shift-btn" id="btn-noch" onclick="setShift('noche')">🌙 Noche</button>
+          </div>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Descripción</label>
+          <textarea class="f-textarea" id="res-desc" placeholder="Detalles adicionales del proyecto o sesión..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-reservar" id="btn-reservar">Crear reserva en Calendar →</button>
+        <div id="res-msg" class="res-msg"></div>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span class="footer-brand">HENRI BARRETT · SOCIAL CONTENT STUDIO</span>
+  <span class="footer-note">Uso interno · 2025</span>
+</footer>
+
+<script>
+<script src="reservas-team.js"></script>
+var GOOGLE_CLIENT_ID    = 'TU_GOOGLE_CLIENT_ID_AQUI';
+var RESERVAS_SCRIPT_URL = 'TU_RESERVAS_SCRIPT_URL_AQUI';
+
+
+
+var resShift = 'manana';
+
+function initReservas() {
+  var sel = document.getElementById('res-nombre');
+  RES_TEAM.forEach(function(p) {
+    var o = document.createElement('option');
+    o.value = p.name; o.textContent = p.name;
+    o.setAttribute('data-email', p.email);
+    sel.appendChild(o);
+  });
+
+  var today = new Date();
+  document.getElementById('res-fecha').value =
+    today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+
+  if (GOOGLE_CLIENT_ID !== 'TU_GOOGLE_CLIENT_ID_AQUI' && window.google) {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+      auto_select: true,
+      cancel_on_tap_outside: false
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g-btn'),
+      { theme: 'filled_black', size: 'medium', text: 'signin', shape: 'pill' }
+    );
+    google.accounts.id.prompt();
+  } else {
+    document.getElementById('g-btn').style.display = 'none';
+  }
+}
+
+function handleGoogleCredential(response) {
+  try {
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    var match = RES_TEAM.find(function(p){ return p.email === payload.email; });
+    if (match) autoSelectName(match.name);
+  } catch(e) {}
+}
+
+function autoSelectName(name) {
+  var sel = document.getElementById('res-nombre');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === name) { sel.selectedIndex = i; break; }
+  }
+  showAuthChip(name);
+  document.getElementById('g-btn').style.display = 'none';
+}
+
+function onNameChange(name) {
+  if (name) showAuthChip(name);
+  else document.getElementById('res-auth-label').innerHTML =
+    '<span class="f-label" style="margin:0">Quién reserva</span>';
+}
+
+function showAuthChip(name) {
+  document.getElementById('res-auth-label').innerHTML =
+    '<div class="auth-chip"><div class="auth-dot"></div>' + name + '</div>';
+}
+
+function setShift(s) {
+  resShift = s;
+  document.getElementById('btn-man').classList.toggle('active', s === 'manana');
+  document.getElementById('btn-noch').classList.toggle('active', s === 'noche');
+}
+
+function submitReserva(e) {
+  e.preventDefault();
+  var nombre   = document.getElementById('res-nombre').value;
+  var fecha    = document.getElementById('res-fecha').value;
+  var proyecto = document.getElementById('res-proyecto').value.trim();
+  var isla     = document.getElementById('res-isla').value.trim();
+  var desc     = document.getElementById('res-desc').value.trim();
+  var msg      = document.getElementById('res-msg');
+  var btn      = document.getElementById('btn-reservar');
+
+  if (!nombre || !fecha || !proyecto || !isla) {
+    msg.className = 'res-msg err';
+    msg.textContent = 'Completa nombre, fecha, proyecto e isla antes de continuar.';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Creando reserva...';
+  msg.className = 'res-msg';
+
+  var payload = {
+    nombre:   nombre,
+    fecha:    fecha,
+    proyecto: proyecto,
+    isla:     isla,
+    turno:    resShift,
+    turnoLabel: resShift === 'manana' ? 'Mañana (08:00–15:00)' : 'Noche (15:00–23:00)',
+    descripcion: desc,
+    startDateTime: fecha + (resShift === 'manana' ? 'T08:00:00' : 'T15:00:00'),
+    endDateTime:   fecha + (resShift === 'manana' ? 'T15:00:00' : 'T23:00:00'),
+    title: '[' + isla + '] ' + proyecto + ' · ' + (resShift === 'manana' ? 'Mañana' : 'Noche') + ' · ' + nombre
+  };
+
+  function resetBtn() {
+    btn.disabled = false;
+    btn.textContent = 'Crear reserva en Calendar →';
+  }
+
+  if (RESERVAS_SCRIPT_URL === 'TU_RESERVAS_SCRIPT_URL_AQUI') {
+    setTimeout(function() {
+      resetBtn();
+      msg.className = 'res-msg ok';
+      msg.textContent = '✓ Reserva registrada (modo demo — conecta RESERVAS_SCRIPT_URL para activar Calendar).';
+    }, 700);
+    return;
+  }
+
+  fetch(RESERVAS_SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+    mode: 'no-cors'
+  }).then(function() {
+    resetBtn();
+    msg.className = 'res-msg ok';
+    msg.textContent = '✓ Reserva creada en Google Calendar.';
+    document.getElementById('reserva-form').reset();
+    document.getElementById('res-fecha').value = new Date().toISOString().split('T')[0];
+    setShift('manana');
+  }).catch(function() {
+    resetBtn();
+    msg.className = 'res-msg err';
+    msg.textContent = 'Error al crear la reserva. Intenta de nuevo.';
+  });
+}
+
+window.addEventListener('DOMContentLoaded', initReservas);
+</script>
+</body>
+</html>

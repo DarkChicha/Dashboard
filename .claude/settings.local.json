@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(firebase deploy --only hosting 2>&1)"
+    ]
+  }
+}
