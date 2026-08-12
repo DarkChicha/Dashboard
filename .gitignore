@@ -20,7 +20,7 @@ Sorteo/team-data.js
 reservas-team.js
 
 # Builds compilados (se regeneran con npm run build) — pueden contener keys inline
-Guiones/assets/
+Guiones/
 
 # Cachés locales de Firebase (se regeneran con deploy)
 .firebase/
