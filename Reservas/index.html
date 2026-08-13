@@ -159,11 +159,21 @@
         <div class="f-row2">
           <div class="f-group">
             <label class="f-label">Código de Proyecto</label>
-            <input type="text" class="f-input" id="res-proyecto" placeholder="Ej: HB-2401">
+            <select class="f-select" id="res-proyecto">
+              <option value="">Cargando proyectos...</option>
+            </select>
           </div>
           <div class="f-group">
             <label class="f-label">Isla de Edición</label>
-            <input type="text" class="f-input" id="res-isla" placeholder="Ej: ISLA-03">
+            <select class="f-select" id="res-isla">
+              <option value="">Selecciona una isla</option>
+              <option value="HEBA-101">HEBA-101</option>
+              <option value="HEBA-102">HEBA-102</option>
+              <option value="HEBA-103">HEBA-103</option>
+              <option value="HEBA-104">HEBA-104</option>
+              <option value="HEBA-106">HEBA-106</option>
+              <option value="HEBA-107">HEBA-107</option>
+            </select>
           </div>
         </div>
 
@@ -247,18 +257,44 @@ function autoSelectName(name) {
     if (sel.options[i].value === name) { sel.selectedIndex = i; break; }
   }
   showAuthChip(name);
+  loadProyectos(name);
   document.getElementById('g-btn').style.display = 'none';
 }
 
 function onNameChange(name) {
-  if (name) showAuthChip(name);
-  else document.getElementById('res-auth-label').innerHTML =
-    '<span class="f-label" style="margin:0">Quién reserva</span>';
+  if (name) {
+    showAuthChip(name);
+    loadProyectos(name);
+  } else {
+    document.getElementById('res-auth-label').innerHTML =
+      '<span class="f-label" style="margin:0">Quién reserva</span>';
+  }
 }
 
 function showAuthChip(name) {
   document.getElementById('res-auth-label').innerHTML =
     '<div class="auth-chip"><div class="auth-dot"></div>' + name + '</div>';
+}
+
+function loadProyectos(name) {
+  var sel = document.getElementById('res-proyecto');
+  sel.innerHTML = '<option value="">Cargando proyectos...</option>';
+  var email = RES_TEAM.find(function(p){ return p.name === name; }).email;
+  fetch(RESERVAS_SCRIPT_URL + '?accion=proyectos&email=' + encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(lista){
+      sel.innerHTML = '';
+      if (!lista || !lista.length) {
+        sel.innerHTML = '<option value="">Sin proyectos asignados</option>';
+        return;
+      }
+      lista.forEach(function(p){
+        var o = document.createElement('option');
+        o.value = p.name; o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    })
+    .catch(function(){ sel.innerHTML = '<option value="">Error al cargar</option>'; });
 }
 
 function setShift(s) {
