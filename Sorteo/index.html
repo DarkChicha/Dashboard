@@ -440,7 +440,7 @@ function runDraw() {
   var absences = getAbsences();
   var slots = AREAS_DATA[currentArea].slots;
   var pairExcl = AREAS_DATA[currentArea].pairExclusions || [];
-  var restricted = ["Ronald Dominguez","Diego Cieza","Olenka Venegas","Josue Sanchez"];
+  var restricted = ["Diego Cieza","Ronald Dominguez"];
 
   function isAvailable(name,di) { return (absences[name]||[]).indexOf(di)===-1; }
 
@@ -453,6 +453,8 @@ function runDraw() {
   function maxDays(name) { return restricted.indexOf(name)!==-1 ? 1 : 2; }
 
   var eligibleForWeek = ELIGIBLE.filter(function(p){
+    // Regla: quienes falten 2+ días en la semana no pueden tener HO
+    if ((absences[p.name]||[]).length >= 2) return false;
     return [0,1,2,3,4].some(function(di){ return isAvailable(p.name,di); });
   });
 
