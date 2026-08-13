@@ -8,7 +8,7 @@ var CALENDAR_NAME = "Social Content Studio Calendar";
 var RRHH_EMAILS   = ["renzo@henribarrett.com", "suzanne@henribarrett.com"];
 var HO_INVITEES   = ["film@henribarrett.com", "renzo@henribarrett.com",
                      "hola@henribarrett.com", "projects@henribarrett.com",
-                     "suzanne@henribarrett.com"];
+                     "suzanne@henribarrett.com", "pablo@henribarrett.com"];
 
 // ── Punto de entrada POST ──────────────────────────────────
 function doPost(e) {
