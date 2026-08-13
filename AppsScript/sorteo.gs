@@ -5,9 +5,15 @@
 
 // ── Configuración ──────────────────────────────────────────
 var RRHH_EMAILS   = ["renzo@henribarrett.com", "suzanne@henribarrett.com"];
-var HO_INVITEES   = ["film@henribarrett.com", "renzo@henribarrett.com",
-                     "hola@henribarrett.com", "projects@henribarrett.com",
-                     "suzanne@henribarrett.com", "pablo@henribarrett.com"];
+// Invitados obligatorios de los eventos HO (comunicado de Renzo):
+// projects, giancarlo, pablo, renzo, suzanne + film (head de área + equipo directo)
+var HO_INVITEES   = ["projects@henribarrett.com", "giancarlo@henribarrett.com",
+                     "pablo@henribarrett.com", "renzo@henribarrett.com",
+                     "suzanne@henribarrett.com", "film@henribarrett.com"];
+
+// Descripción obligatoria del evento HO (comunicado de Renzo)
+var HO_DESCRIPCION = "Hola, Team. Hoy estaré de Home Office / Trabajo Remoto. " +
+  "Estaré disponible durante el horario laboral y cumpliré con todas mis responsabilidades.";
 
 // ── Punto de entrada POST ──────────────────────────────────
 function doPost(e) {
@@ -103,7 +109,11 @@ function crearEventosHO(payload) {
     var fecha = new Date(dia.date + "T12:00:00");
 
     dia.people.forEach(function (persona) {
-      var titulo = persona + " H.O.";
+      // Título formato del comunicado: Nombre_Apellido_H.O. 💻🏠
+      var titulo = persona.replace(/\s+/g, "_") + "_H.O. 💻🏠";
+
+      // Descripción obligatoria del comunicado + nombre y apellido
+      var descripcion = HO_DESCRIPCION + "\n\n" + persona;
 
       // Evitar duplicados: buscar si ya existe un evento con ese título ese día
       var eventosDelDia = calendario.getEventsForDay(fecha);
@@ -113,6 +123,7 @@ function crearEventosHO(payload) {
       if (yaExiste) return;
 
       var evento = calendario.createAllDayEvent(titulo, fecha);
+      evento.setDescription(descripcion);
       HO_INVITEES.forEach(function (email) {
         evento.addGuest(email);
       });
