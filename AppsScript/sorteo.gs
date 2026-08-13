@@ -29,13 +29,40 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── Lógica principal: hace las 3 acciones del sorteo, en orden ──
+// ── Lógica principal: 3 acciones independientes ──────────────
+// Cada una con su propio try/catch: si una falla, las demás igual se ejecutan
 function procesarSorteo(payload) {
-  enviarMailCompilatorio(payload);
-  var eventos = crearEventosHO(payload);
-  var mails = enviarMailsRecordatorio(payload);
+  var resultado = {ok:true};
 
-  return {ok:true, eventos: eventos, mails: mails};
+  // Acción 1: compilatorio a RRHH (renzo + suzanne)
+  try {
+    enviarMailCompilatorio(payload);
+    resultado.compilatorio = true;
+  } catch (err) {
+    resultado.compilatorio = false;
+    resultado.errorCompilatorio = String(err);
+    Logger.log("ERROR compilatorio: " + err);
+  }
+
+  // Acción 2: eventos all-day en Calendar (si falla, no corta los mails)
+  try {
+    resultado.eventos = crearEventosHO(payload);
+  } catch (err) {
+    resultado.eventos = 0;
+    resultado.errorEventos = String(err);
+    Logger.log("ERROR eventos: " + err);
+  }
+
+  // Acción 3: recordatorios individuales con aviso de Buk
+  try {
+    resultado.mails = enviarMailsRecordatorio(payload);
+  } catch (err) {
+    resultado.mails = 0;
+    resultado.errorMails = String(err);
+    Logger.log("ERROR recordatorios: " + err);
+  }
+
+  return resultado;
 }
 
 // ── Acción 1: mail compilatorio a RRHH ─────────────────────
