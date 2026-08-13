@@ -65,10 +65,8 @@ function enviarMailCompilatorio(payload) {
 
 // ── Acción 2: crear eventos all-day de HO en Calendar ──────
 function crearEventosHO(payload) {
-  var calendario = CalendarApp.getCalendarsByName(CALENDAR_NAME)[0];
-  if (!calendario) {
-    throw new Error("Calendario no encontrado: " + CALENDAR_NAME);
-  }
+  // Los eventos HO van al calendario por defecto de la cuenta que ejecuta el script
+  var calendario = CalendarApp.getDefaultCalendar();
 
   var totalEventos = 0;
 
