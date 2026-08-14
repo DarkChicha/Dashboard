@@ -440,7 +440,8 @@ function runDraw() {
   var absences = getAbsences();
   var slots = AREAS_DATA[currentArea].slots;
   var pairExcl = AREAS_DATA[currentArea].pairExclusions || [];
-  var restricted = ["Diego Cieza","Ronald Dominguez"];
+  // Regla "max 1 HO/semana" definida en team-data.js (archivo local, no versionado)
+  var restricted = AREAS_DATA[currentArea].restrictedHO || [];
 
   function isAvailable(name,di) { return (absences[name]||[]).indexOf(di)===-1; }
 

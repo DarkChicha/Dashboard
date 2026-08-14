@@ -13,8 +13,9 @@ Rápidas, sin cuentas, sin pasos de más.
 
 ## Stack
 
-- React 19 + Vite
-- Firebase Hosting (`video-editorial.web.app`)
+- Vite + Firebase Hosting (`video-editorial.web.app`)
+- HTML/JS/CSS plano (herramientas independientes, sin framework)
+- Backends Google Apps Script (Calendar, Gmail, Sheets)
 - Claude Sonnet 4 / Gemini 2.5 Flash (generación de guiones)
 
 ## Setup local

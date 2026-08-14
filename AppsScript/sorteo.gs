@@ -4,12 +4,15 @@
 // ============================================================
 
 // ── Configuración ──────────────────────────────────────────
-var RRHH_EMAILS   = ["renzo@henribarrett.com", "suzanne@henribarrett.com"];
+// IMPORTANTE: los emails reales NO se versionan. Al desplegar en
+// script.google.com, pegar los valores reales del comunicado de RRHH.
+// (Archivo local de referencia: no existe en el repo — preguntar a RRHH)
+var RRHH_EMAILS   = ["PEGA_EMAIL_RRHH_1@henribarrett.com", "PEGA_EMAIL_RRHH_2@henribarrett.com"];
 // Invitados obligatorios de los eventos HO (comunicado de Renzo):
 // projects, giancarlo, pablo, renzo, suzanne + film (head de área + equipo directo)
-var HO_INVITEES   = ["projects@henribarrett.com", "giancarlo@henribarrett.com",
-                     "pablo@henribarrett.com", "renzo@henribarrett.com",
-                     "suzanne@henribarrett.com", "film@henribarrett.com"];
+var HO_INVITEES   = ["PEGA_EMAIL_PROJECTS@henribarrett.com", "PEGA_EMAIL_GIANCARLO@henribarrett.com",
+                     "PEGA_EMAIL_PABLO@henribarrett.com", "PEGA_EMAIL_RENZO@henribarrett.com",
+                     "PEGA_EMAIL_SUZANNE@henribarrett.com", "PEGA_EMAIL_FILM@henribarrett.com"];
 
 // Descripción obligatoria del evento HO (comunicado de Renzo)
 var HO_DESCRIPCION = "Hola, Team. Hoy estaré de Home Office / Trabajo Remoto. " +

@@ -26,10 +26,10 @@ Los dos scripts son **plataformas independientes**: cada uno vive en su propio p
 
 ```javascript
 var CALENDAR_NAME = "Social Content Studio Calendar";
-var RRHH_EMAILS   = ["renzo@henribarrett.com", "suzanne@henribarrett.com"];
-var HO_INVITEES   = ["film@henribarrett.com", "renzo@henribarrett.com",
-                     "hola@henribarrett.com", "projects@henribarrett.com",
-                     "suzanne@henribarrett.com"];
+var RRHH_EMAILS   = ["PEGA_EMAIL_RRHH_1@henribarrett.com", "PEGA_EMAIL_RRHH_2@henribarrett.com"];
+var HO_INVITEES   = ["PEGA_EMAIL_PROJECTS@henribarrett.com", "PEGA_EMAIL_GIANCARLO@henribarrett.com",
+                     "PEGA_EMAIL_PABLO@henribarrett.com", "PEGA_EMAIL_RENZO@henribarrett.com",
+                     "PEGA_EMAIL_SUZANNE@henribarrett.com", "PEGA_EMAIL_FILM@henribarrett.com"];
 ```
 
 ### A.2 Punto de entrada
@@ -57,17 +57,17 @@ function doPost(e) {
   "weekLabel": "5 al 9 de agosto 2026",
   "weekNumber": 3,
   "areaName": "Audiovisual",
-  "directorEmail": "luisguillermo@henribarrett.com",
-  "areaEmails": {"Michelle Penny": "michelle@henribarrett.com", "...": "..."},
+  "directorEmail": "director@henribarrett.com",
+  "areaEmails": {"Nombre Editor": "editor@henribarrett.com", "...": "..."},
   "days": [
-    {"dayName": "Lunes", "date": "2026-08-05", "people": ["Alex Bendezu", "Olenka Venegas"]},
-    {"dayName": "Martes", "date": "2026-08-06", "people": ["Johann Chao"]}
+    {"dayName": "Lunes", "date": "2026-08-05", "people": ["Nombre Editor", "Otro Editor"]},
+    {"dayName": "Martes", "date": "2026-08-06", "people": ["Tercer Editor"]}
   ]
 }
 ```
 
 **Acción 1 — Mail compilatorio a RRHH:**
-- Para: `RRHH_EMAILS` (renzo + suzanne)
+- Para: `RRHH_EMAILS` (emails de RRHH, definidos al desplegar)
 - Asunto: `HO {areaName} — Semana {weekNumber} de 5`
 - Cuerpo (texto plano, sin HTML):
   ```
@@ -85,7 +85,7 @@ function doPost(e) {
 - Calendario: buscar por nombre `CALENDAR_NAME`. Si no existe → `throw new Error("Calendario no encontrado: " + CALENDAR_NAME)`
 - Por CADA día con personas, por CADA persona:
   - Evento **all-day** en la fecha del día (`new Date(payload.days[i].date + "T12:00:00")` para evitar problemas de timezone)
-  - Título: `{Nombre} H.O.` (ej: `Alex Bendezu H.O.`)
+  - Título: `{Nombre} H.O.` (ej: `Nombre Editor H.O.`)
   - Invitados: `HO_INVITEES` (todos, vía `event.addGuest(email)`)
   - **Sin duplicados:** antes de crear, comprobar si ya existe evento de esa persona ese día. Buscar por título `{Nombre} H.O.` en esa fecha (`CalendarApp.getCalendarByName(...).getEventsForDay(fecha)`) y si ya existe uno con ese título exacto → skip.
 
@@ -158,7 +158,7 @@ function doPost(e) {
 **Payload recibido** (del frontend, `Reservas/index.html` líneas 289-300):
 ```json
 {
-  "nombre": "Alex Bendezu",
+  "nombre": "Nombre Editor",
   "fecha": "2026-08-12",
   "proyecto": "Campaña Verano (HEBA-103)",   // nombre del proyecto Basecamp
   "isla": "HEBA-103",
@@ -166,7 +166,7 @@ function doPost(e) {
   "turnoLabel": "Mañana (08:00–15:00)",
   "startDateTime": "2026-08-12T08:00:00",
   "endDateTime": "2026-08-12T15:00:00",
-  "title": "[HEBA-103] Campaña Verano · Mañana · Alex Bendezu",
+  "title": "[HEBA-103] Campaña Verano · Mañana · Nombre Editor",
   "descripcion": "..."
 }
 ```
