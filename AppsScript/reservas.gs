@@ -139,8 +139,8 @@ function obtenerOCrearSheet() {
 }
 
 // ── listarProyectosDe: proyectos Basecamp donde la persona es miembro ──
-// Filtra por NOMBRE (normalizado): Basecamp enmascara los emails de los demás,
-// pero devuelve los nombres completos de todos los miembros.
+// Filtra por NOMBRE con matching flexible: Basecamp enmascara los emails de
+// los demás, pero devuelve los nombres completos de todos los miembros.
 function listarProyectosDe(nombre) {
   var token;
   try {
@@ -153,13 +153,13 @@ function listarProyectosDe(nombre) {
   var mapa = obtenerMapaProyectos(token);
   if (mapa.error) return mapa;
 
-  var nombreBuscado = normalizarNombre(String(nombre || ""));
+  var nombreBuscado = String(nombre || "").trim();
   var resultado = [];
 
   Object.keys(mapa).forEach(function (proyectoId) {
     var proyecto = mapa[proyectoId];
     var esMiembro = (proyecto.nombres || []).some(function (n) {
-      return normalizarNombre(n) === nombreBuscado;
+      return nombreCoincide(n, nombreBuscado);
     });
     if (esMiembro) {
       resultado.push({id: proyectoId, name: proyecto.name});
@@ -169,14 +169,57 @@ function listarProyectosDe(nombre) {
   return resultado;
 }
 
-// Normaliza un nombre para comparar: minúsculas, sin acentos, sin espacios
+// ── Matching flexible de nombres ──
+// Normaliza y compara de 3 formas: exacto, compacto (sin espacios) y por tokens.
+// Ejemplos que resuelve:
+//   "Luis Guillermo"  ==  "LuisGuillermo"  (sin espacio)
+//   "Johann Chao"     ==  "Johann"         (solo nombre)
+//   "Gabriel Carrera" ==  "Gabriel"        (solo nombre)
+function nombreCoincide(nombreMiembro, nombreBuscado) {
+  var m = normalizarNombre(nombreMiembro);   // compacto, sin espacios
+  var b = normalizarNombre(nombreBuscado);
+  if (!m || !b) return false;
+  if (m === b) return true;                  // exacto (ya cubre acentos/espacios)
+
+  var tm = tokensNombre(nombreMiembro);      // tokens con espacios preservados
+  var tb = tokensNombre(nombreBuscado);
+  if (!tm.length || !tb.length) return false;
+
+  // El conjunto de tokens más pequeño debe estar contenido en el más grande
+  var menor = tm.length <= tb.length ? tm : tb;
+  var mayor = tm.length <= tb.length ? tb : tm;
+
+  // Caso "LuisGuillermo" (1 token) vs "Luis Guillermo" (2 tokens):
+  // comparar el token único contra la concatenación del otro lado
+  if (menor.length === 1 && mayor.length > 1) {
+    if (menor[0] === mayor.join("")) return true;
+  }
+
+  return menor.every(function (token) {
+    if (token.length < 4) return false;      // evita falsos positivos ("ana")
+    return mayor.some(function (gt) {
+      return gt === token
+        || (gt.length >= 5 && token.length >= 5 && gt.indexOf(token) === 0)  // prefijo (ambos ≥5: evita "fran"→"francisco")
+        || (gt.length >= 5 && token.length >= 5 && token.indexOf(gt) === 0);
+    });
+  });
+}
+
+// Normaliza un nombre a su forma compacta: minúsculas, sin acentos, sin espacios
 function normalizarNombre(s) {
+  return tokensNombre(s).join("");
+}
+
+// Normaliza a tokens: minúsculas, sin acentos, sin símbolos (espacios preservados)
+function tokensNombre(s) {
   return String(s || "")
     .toLowerCase()
     .replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e")
     .replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o")
     .replace(/[úùüû]/g, "u").replace(/[ñ]/g, "n")
-    .replace(/[^a-z0-9]/g, "");
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter(function (t) { return t.length > 0; });
 }
 
 // ── Devuelve el mapa {projectId: {name, emails:[...]}} con caché de 24h ──
