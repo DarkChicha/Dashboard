@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sorteo Home Office - Henri Barrett</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0a0a;--surface:#181818;--surface2:#222222;--accent:#ccff00;--accent2:#ff6b00;--warn:#ff6b00;--danger:#ff4444;--tl:#a855f7;--text:#ffffff;--muted:#666666;--border:#2a2a2a;--radius:12px;}
@@ -117,6 +118,20 @@ input[type="checkbox"]{width:17px;height:17px;cursor:pointer;accent-color:var(--
 <body>
 <div class="wrap">
 
+<!-- LOGIN GATE -->
+<div id="login-screen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;">
+  <div style="max-width:420px;width:100%;text-align:center;padding:40px 30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">
+    <div style="font-size:40px;margin-bottom:16px;">🎲</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Sorteo <span style="color:var(--accent);">Home Office</span></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">Acceso exclusivo para directores de área.</p>
+    <div id="g-btn-login"></div>
+    <p id="login-msg" style="color:var(--muted);font-size:13px;margin-top:16px;display:none;"></p>
+    <p id="login-deny" style="color:var(--danger);font-size:13px;margin-top:16px;display:none;">Acceso restringido. Esta herramienta es solo para directores de área de Henri Barrett.</p>
+  </div>
+</div>
+
+<div id="app-content" style="display:none;">
+
 <header style="margin-bottom:4px;">
   <div class="badge" id="area-badge">Henri Barrett</div>
   <h1>Sorteo <span>Home Office</span></h1>
@@ -204,6 +219,8 @@ input[type="checkbox"]{width:17px;height:17px;cursor:pointer;accent-color:var(--
     </div>
   </div>
 </div>
+
+</div><!-- /app-content -->
 
 </div>
 <script src="team-data.js"></script>
@@ -681,9 +698,57 @@ function copyRRHH(){
 }
 
 window.addEventListener("DOMContentLoaded", function() {
-  buildAreaTabs();
-  selectArea("Audiovisual");
+  initLogin();
 });
+
+// ═══ LOGIN GATE — acceso solo para directores de área ═══
+var GOOGLE_CLIENT_ID = "816877260952-a9062v4ppsprtfm0rsffjseau8dlcr7h.apps.googleusercontent.com";
+var DIRECTOR_EMAILS  = [
+  "andrea@henribarrett.com",
+  "oswaldo@henribarrett.com",
+  "tate@henribarrett.com",
+  "pablo@henribarrett.com",
+  "giancarlo@henribarrett.com",
+  "luisguillermo@henribarrett.com"
+];
+
+function initLogin() {
+  if (!window.google || !window.google.accounts) {
+    // El script de Google aún se está cargando: reintentar en 300ms
+    setTimeout(initLogin, 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById("g-btn-login"),
+    { theme: "filled_black", size: "large", text: "continue_with", shape: "pill" }
+  );
+}
+
+function handleCredential(response) {
+  var payload = JSON.parse(atob(response.credential.split(".")[1]));
+  var email = (payload.email || "").trim().toLowerCase();
+  document.getElementById("login-msg").style.display = "block";
+  document.getElementById("login-msg").textContent = "Verificando acceso de " + email + "...";
+
+  if (DIRECTOR_EMAILS.indexOf(email) !== -1) {
+    // Director autorizado: mostrar la app
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-content").style.display = "block";
+    buildAreaTabs();
+    selectArea("Audiovisual");
+  } else {
+    // No es director: acceso restringido
+    document.getElementById("login-msg").style.display = "none";
+    document.getElementById("g-btn-login").style.display = "none";
+    document.getElementById("login-deny").style.display = "block";
+  }
+}
 </script>
 </body>
 </html>
