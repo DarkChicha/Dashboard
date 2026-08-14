@@ -64,7 +64,7 @@ function crearReserva(payload) {
     description: (payload.descripcion || "") + "\nEditor: " + payload.nombre,
     start: {dateTime: payload.startDateTime, timeZone: TIME_ZONE},
     end:   {dateTime: payload.endDateTime, timeZone: TIME_ZONE},
-    colorId: "6"
+    colorId: "3"   // UVA (etiqueta "edit" configurada en el perfil del usuario)
   };
 
   try {
