@@ -129,9 +129,9 @@
       <span style="font-size:36px;display:block;margin-bottom:20px;">🖥️</span>
       <div class="res-title">Reserva de<span>Isla de Edición</span></div>
       <p class="res-desc">Reserva tu isla para el turno que necesitas. El evento se agrega automáticamente a Google Calendar del equipo.</p>
-      <div class="res-feature">Turno mañana: 08:00 – 15:00</div>
-      <div class="res-feature">Turno noche: 15:00 – 23:00</div>
-      <div class="res-feature">Confirmación inmediata en Calendar</div>
+      <div class="res-feature">Turno mañana: 09:00 – 13:00</div>
+      <div class="res-feature">Turno tarde: 16:00 – 18:00</div>
+      <div class="res-feature">Elegí un turno o ambos</div>
     </div>
 
     <!-- FORM -->
@@ -181,7 +181,8 @@
           <label class="f-label">Turno</label>
           <div class="shift-toggle">
             <button type="button" class="shift-btn active" id="btn-man" onclick="setShift('manana')">☀️ Mañana</button>
-            <button type="button" class="shift-btn" id="btn-noch" onclick="setShift('noche')">🌙 Noche</button>
+            <button type="button" class="shift-btn" id="btn-tarde" onclick="setShift('tarde')">🌤️ Tarde</button>
+            <button type="button" class="shift-btn" id="btn-ambos" onclick="setShift('ambos')">🔁 Ambos</button>
           </div>
         </div>
 
@@ -300,7 +301,29 @@ function loadProyectos(name) {
 function setShift(s) {
   resShift = s;
   document.getElementById('btn-man').classList.toggle('active', s === 'manana');
-  document.getElementById('btn-noch').classList.toggle('active', s === 'noche');
+  document.getElementById('btn-tarde').classList.toggle('active', s === 'tarde');
+  document.getElementById('btn-ambos').classList.toggle('active', s === 'ambos');
+}
+
+// Devuelve los payloads de reserva según el turno seleccionado
+function buildReservaPayloads(nombre, fecha, proyecto, isla, desc) {
+  var turnos = resShift === 'ambos' ? ['manana', 'tarde'] : [resShift];
+  return turnos.map(function (t) {
+    var esManana = t === 'manana';
+    return {
+      nombre: nombre,
+      fecha: fecha,
+      proyecto: proyecto,
+      isla: isla,
+      turno: t,
+      turnoLabel: esManana ? 'Mañana (09:00–13:00)' : 'Tarde (16:00–18:00)',
+      descripcion: desc,
+      horas: esManana ? 4 : 2,
+      startDateTime: fecha + (esManana ? 'T09:00:00' : 'T16:00:00'),
+      endDateTime:   fecha + (esManana ? 'T13:00:00' : 'T18:00:00'),
+      title: '[' + isla + '] ' + proyecto + ' · ' + (esManana ? 'Mañana' : 'Tarde') + ' · ' + nombre
+    };
+  });
 }
 
 function submitReserva(e) {
@@ -322,18 +345,7 @@ function submitReserva(e) {
   btn.disabled = true; btn.textContent = 'Creando reserva...';
   msg.className = 'res-msg';
 
-  var payload = {
-    nombre:   nombre,
-    fecha:    fecha,
-    proyecto: proyecto,
-    isla:     isla,
-    turno:    resShift,
-    turnoLabel: resShift === 'manana' ? 'Mañana (08:00–15:00)' : 'Noche (15:00–23:00)',
-    descripcion: desc,
-    startDateTime: fecha + (resShift === 'manana' ? 'T08:00:00' : 'T15:00:00'),
-    endDateTime:   fecha + (resShift === 'manana' ? 'T15:00:00' : 'T23:00:00'),
-    title: '[' + isla + '] ' + proyecto + ' · ' + (resShift === 'manana' ? 'Mañana' : 'Noche') + ' · ' + nombre
-  };
+  var payloads = buildReservaPayloads(nombre, fecha, proyecto, isla, desc);
 
   function resetBtn() {
     btn.disabled = false;
@@ -349,15 +361,20 @@ function submitReserva(e) {
     return;
   }
 
-  fetch(RESERVAS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload),
-    mode: 'no-cors'
-  }).then(function() {
+  // Enviar cada reserva (1 turno → 1 POST; "Ambos" → 2 POSTs)
+  var envios = payloads.map(function(p) {
+    return fetch(RESERVAS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(p),
+      mode: 'no-cors'
+    });
+  });
+
+  Promise.all(envios).then(function() {
     resetBtn();
     msg.className = 'res-msg ok';
-    msg.textContent = '✓ Reserva creada en Google Calendar.';
+    msg.textContent = payloads.length > 1 ? '✓ Ambos turnos creados en Google Calendar.' : '✓ Reserva creada en Google Calendar.';
     document.getElementById('reserva-form').reset();
     document.getElementById('res-fecha').value = new Date().toISOString().split('T')[0];
     setShift('manana');

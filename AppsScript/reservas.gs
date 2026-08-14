@@ -108,7 +108,7 @@ function registrarEnSheet(payload, emailEditor) {
     payload.turno,
     payload.startDateTime,
     payload.endDateTime,
-    7,
+    payload.horas || 7,   // mañana=4, tarde=2 (viene del frontend)
     new Date().toISOString()
   ]);
 }
