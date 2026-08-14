@@ -25,8 +25,8 @@ var REDIRECT_URI     = "PEGA_URL_DEL_WEBAPP";
 function doGet(e) {
   var accion = e.parameter.accion;
   if (accion === "proyectos") {
-    var email = e.parameter.email;
-    var proyectos = listarProyectosDe(email);   // → [{id, name}]
+    var nombre = e.parameter.nombre || e.parameter.email;   // filtra por NOMBRE (los emails Basecamp vienen enmascarados)
+    var proyectos = listarProyectosDe(nombre);   // → [{id, name}]
     return ContentService.createTextOutput(JSON.stringify(proyectos))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -139,7 +139,9 @@ function obtenerOCrearSheet() {
 }
 
 // ── listarProyectosDe: proyectos Basecamp donde la persona es miembro ──
-function listarProyectosDe(email) {
+// Filtra por NOMBRE (normalizado): Basecamp enmascara los emails de los demás,
+// pero devuelve los nombres completos de todos los miembros.
+function listarProyectosDe(nombre) {
   var token;
   try {
     token = getBasecampToken();
@@ -151,20 +153,30 @@ function listarProyectosDe(email) {
   var mapa = obtenerMapaProyectos(token);
   if (mapa.error) return mapa;
 
-  var emailBuscado = String(email || "").trim().toLowerCase();
+  var nombreBuscado = normalizarNombre(String(nombre || ""));
   var resultado = [];
 
   Object.keys(mapa).forEach(function (proyectoId) {
     var proyecto = mapa[proyectoId];
-    var tieneEmail = proyecto.emails.some(function (e) {
-      return String(e || "").trim().toLowerCase() === emailBuscado;
+    var esMiembro = (proyecto.nombres || []).some(function (n) {
+      return normalizarNombre(n) === nombreBuscado;
     });
-    if (tieneEmail) {
+    if (esMiembro) {
       resultado.push({id: proyectoId, name: proyecto.name});
     }
   });
 
   return resultado;
+}
+
+// Normaliza un nombre para comparar: minúsculas, sin acentos, sin espacios
+function normalizarNombre(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e")
+    .replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o")
+    .replace(/[úùüû]/g, "u").replace(/[ñ]/g, "n")
+    .replace(/[^a-z0-9]/g, "");
 }
 
 // ── Devuelve el mapa {projectId: {name, emails:[...]}} con caché de 24h ──
@@ -220,9 +232,10 @@ function barrerProyectosBasecamp(token) {
     }
 
     var personas = JSON.parse(resPersonas.getContentText());
-    var emails = (personas || []).map(function (p) { return p.email_address; });
+    var emails  = (personas || []).map(function (p) { return p.email_address; });
+    var nombres = (personas || []).map(function (p) { return p.name; });
 
-    mapa[proyecto.id] = {name: proyecto.name, emails: emails};
+    mapa[proyecto.id] = {name: proyecto.name, emails: emails, nombres: nombres};
   });
 
   return mapa;
