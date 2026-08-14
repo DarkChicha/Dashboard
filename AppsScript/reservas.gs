@@ -248,20 +248,34 @@ function obtenerMapaProyectos(token) {
   return mapa;
 }
 
-// ── Consulta Basecamp: todos los proyectos y sus personas ──
+// ── Consulta Basecamp: TODOS los proyectos (con paginación) y sus personas ──
+// Basecamp pagina los resultados; hay que seguir el header "Link: rel=next"
+// hasta agotar las páginas, o el script solo verá la primera página (~15).
 function barrerProyectosBasecamp(token) {
   var headers = {Authorization: "Bearer " + token};
+  var proyectos = [];
+  var url = BASECAMP_API + "/projects.json?per_page=100";
 
-  var resProyectos = UrlFetchApp.fetch(BASECAMP_API + "/projects.json", {
-    headers: headers,
-    muteHttpExceptions: true
-  });
+  while (url) {
+    var resProyectos = UrlFetchApp.fetch(url, {
+      headers: headers,
+      muteHttpExceptions: true
+    });
 
-  if (resProyectos.getResponseCode() === 401) {
-    throw new Error("Token de Basecamp inválido o vencido (401)");
+    if (resProyectos.getResponseCode() === 401) {
+      throw new Error("Token de Basecamp inválido o vencido (401)");
+    }
+
+    var pagina = JSON.parse(resProyectos.getContentText());
+    proyectos = proyectos.concat(pagina);
+
+    // Buscar el enlace a la siguiente página en el header "Link"
+    url = null;
+    var linkHeader = resProyectos.getHeaders()["Link"] || "";
+    var matches = linkHeader.match(/<([^>]+)>\s*;\s*rel="next"/);
+    if (matches) url = matches[1];
   }
 
-  var proyectos = JSON.parse(resProyectos.getContentText());
   var mapa = {};
 
   proyectos.forEach(function (proyecto) {
