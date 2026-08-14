@@ -5,7 +5,9 @@
 // ============================================================
 
 // ── Configuración ──────────────────────────────────────────
-var CALENDAR_NAME = "Social Content Studio Calendar";
+// ID directo del calendario (más robusto que el nombre: el nombre tiene emoji 🎥)
+var CALENDAR_ID    = "c_7cd9e113a6e29b2d0259fbe467148f3bbdfe5c50a258e7e59adb3e130c46fc2a@group.calendar.google.com";
+var TIME_ZONE      = "America/Lima";   // zona horaria de los eventos
 var SHEET_NAME    = "Registro de Edición";
 var ISLAS_VALIDAS = ["HEBA-101","HEBA-102","HEBA-103","HEBA-104","HEBA-106","HEBA-107"];
 var BASECAMP_API  = "https://3.basecampapi.com/4977992";  // account id real
@@ -56,13 +58,13 @@ function crearReserva(payload) {
 
   // 2. Crear evento con color verde vía Advanced Calendar Service
   //    (CalendarApp normal no soporta asignar color al evento)
-  var calId = getCalendarId(CALENDAR_NAME);
+  var calId = getCalendarId(CALENDAR_ID);
   var evento = {
     summary: payload.title,
     description: (payload.descripcion || "") + "\nEditor: " + payload.nombre,
-    start: {dateTime: payload.startDateTime},
-    end:   {dateTime: payload.endDateTime},
-    colorId: "6"   // VERDE
+    start: {dateTime: payload.startDateTime, timeZone: TIME_ZONE},
+    end:   {dateTime: payload.endDateTime, timeZone: TIME_ZONE},
+    colorId: "6"
   };
 
   try {
@@ -81,9 +83,9 @@ function crearReserva(payload) {
 
 // ── Resuelve el ID del calendario por nombre ────────────────
 function getCalendarId(nombreCalendario) {
-  var calendario = CalendarApp.getCalendarsByName(nombreCalendario)[0];
+  var calendario = CalendarApp.getCalendarById(CALENDAR_ID);
   if (!calendario) {
-    throw new Error("Calendario no encontrado: " + nombreCalendario);
+    throw new Error("Calendario no encontrado: " + CALENDAR_ID);
   }
   return calendario.getId();
 }
