@@ -130,7 +130,7 @@
       <div class="res-title">Reserva de<span>Isla de Edición</span></div>
       <p class="res-desc">Reserva tu isla para el turno que necesitas. El evento se agrega automáticamente a Google Calendar del equipo.</p>
       <div class="res-feature">Turno mañana: 09:00 – 13:00</div>
-      <div class="res-feature">Turno tarde: 16:00 – 18:00</div>
+      <div class="res-feature">Turno tarde: 14:00 – 18:00</div>
       <div class="res-feature">Elegí un turno o ambos</div>
     </div>
 
@@ -316,10 +316,10 @@ function buildReservaPayloads(nombre, fecha, proyecto, isla, desc) {
       proyecto: proyecto,
       isla: isla,
       turno: t,
-      turnoLabel: esManana ? 'Mañana (09:00–13:00)' : 'Tarde (16:00–18:00)',
+      turnoLabel: esManana ? 'Mañana (09:00–13:00)' : 'Tarde (14:00–18:00)',
       descripcion: desc,
-      horas: esManana ? 4 : 2,
-      startDateTime: fecha + (esManana ? 'T09:00:00' : 'T16:00:00'),
+      horas: 4,   // ambos turnos son de 4 horas
+      startDateTime: fecha + (esManana ? 'T09:00:00' : 'T14:00:00'),
       endDateTime:   fecha + (esManana ? 'T13:00:00' : 'T18:00:00'),
       title: '[' + isla + '] ' + proyecto + ' · ' + (esManana ? 'Mañana' : 'Tarde') + ' · ' + nombre
     };
