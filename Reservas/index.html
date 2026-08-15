@@ -146,7 +146,7 @@
       </div>
 
       <form id="reserva-form" onsubmit="submitReserva(event)">
-        <div class="f-group">
+        <div class="f-group" style="display:none" id="res-nombre-group">
           <label class="f-label">Nombre</label>
           <select class="f-select" id="res-nombre" onchange="onNameChange(this.value)">
             <option value="">Selecciona tu nombre</option>
@@ -209,7 +209,7 @@
 
 <script src="/reservas-team.js"></script>
 <script>
-var GOOGLE_CLIENT_ID    = 'TU_GOOGLE_CLIENT_ID_AQUI';
+var GOOGLE_CLIENT_ID    = '816877260952-a9062v4ppsprtfm0rsffjseau8dlcr7h.apps.googleusercontent.com';
 var RESERVAS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZDiYRN-EySmoQwQINnwW4Bl2u5INlVCwIlpdip2J0LaEvPiM7SxwfkQIvrTP46uX9/exec';
 
 var resShift = 'manana';
@@ -241,6 +241,9 @@ function initReservas() {
       { theme: 'filled_black', size: 'medium', text: 'signin', shape: 'pill' }
     );
     google.accounts.id.prompt();
+  } else if (GOOGLE_CLIENT_ID !== 'TU_GOOGLE_CLIENT_ID_AQUI') {
+    // El script de Google aún se está cargando: reintentar en 300ms
+    setTimeout(initReservas, 300);
   } else {
     document.getElementById('g-btn').style.display = 'none';
   }
@@ -250,7 +253,15 @@ function handleGoogleCredential(response) {
   try {
     var payload = JSON.parse(atob(response.credential.split('.')[1]));
     var match = RES_TEAM.find(function(p){ return p.email === payload.email; });
-    if (match) autoSelectName(match.name);
+    if (match) {
+      autoSelectName(match.name);
+    } else {
+      document.getElementById('res-auth-label').innerHTML =
+        '<div class="auth-chip" style="border-color:var(--danger);color:var(--danger)">Correo no autorizado: ' + payload.email + '</div>';
+      var sel = document.getElementById('res-proyecto');
+      sel.innerHTML = '<option value="">Acceso restringido al equipo</option>';
+      document.getElementById('g-btn').style.display = 'none';
+    }
   } catch(e) {}
 }
 
