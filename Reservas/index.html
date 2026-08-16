@@ -531,13 +531,19 @@ function celdaEstadoHtml(fecha, isla, reservasDia) {
   }
   var chips = '';
   if (ocupacion.manana) {
-    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">☀️ ' + escaparHtml(ocupacion.manana) + '</span>';
+    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">☀️ ' + escaparHtml(primerNombre(ocupacion.manana)) + '</span>';
   }
   if (ocupacion.tarde) {
-    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">🌤️ ' + escaparHtml(ocupacion.tarde) + '</span>';
+    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">🌤️ ' + escaparHtml(primerNombre(ocupacion.tarde)) + '</span>';
   }
   return '<td class="estado-celda" style="border-color:' + rgbaDeHex(color, 0.55) + ';background:' + rgbaDeHex(color, 0.06) + ';">' +
          chips + '</td>';
+}
+
+// Solo el primer nombre (ej: "Luis Guillermo" → "Luis")
+function primerNombre(nombreCompleto) {
+  var partes = String(nombreCompleto || '').split(' ');
+  return partes[0] || nombreCompleto;
 }
 
 function pintarEstadoError(mensaje) {
