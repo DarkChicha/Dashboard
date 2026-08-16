@@ -30,6 +30,11 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify(proyectos))
       .setMimeType(ContentService.MimeType.JSON);
   }
+  if (accion === "estado") {
+    var estado = obtenerEstadoReservas();
+    return ContentService.createTextOutput(JSON.stringify(estado))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   // OAuth callback de Basecamp (ver handleOAuthCallback)
   if (e.parameter.code) return handleOAuthCallback(e.parameter);
   return ContentService.createTextOutput(JSON.stringify({error:"Acción no válida"}))
@@ -100,6 +105,107 @@ var COLORES_ISLA = {
 };
 function colorDeIsla(isla) {
   return COLORES_ISLA[isla] || "3";
+}
+
+// ── obtenerEstadoReservas: grilla de la semana actual y la próxima ──
+// Consulta Calendar.Events.list (Advanced Calendar Service) desde el lunes de
+// la semana actual hasta el domingo de la próxima (14 días, zona America/Lima)
+// y devuelve, por semana, un mapa {fecha: {isla: {turno: nombre}}}.
+function obtenerEstadoReservas() {
+  var calId = getCalendarId(CALENDAR_ID);
+  var hoyLima = Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd");
+
+  // Lunes de la semana actual (día ISO: 1=Lun ... 7=Dom)
+  var lunesStr   = sumarDiasStr(hoyLima, 1 - diaDeSemanaISO(hoyLima));
+  var domingoStr = sumarDiasStr(lunesStr, 13);   // domingo de la semana próxima
+
+  // Límites del rango: Lun 00:00:00 → Dom 23:59:59 en America/Lima
+  var timeMin = Utilities.parseDate(lunesStr + " 00:00:00", TIME_ZONE, "yyyy-MM-dd HH:mm:ss");
+  var timeMax = Utilities.parseDate(domingoStr + " 23:59:59", TIME_ZONE, "yyyy-MM-dd HH:mm:ss");
+
+  var eventos;
+  try {
+    eventos = Calendar.Events.list(calId, {
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      singleEvents: true,
+      orderBy: "startTime"
+    });
+  } catch (err) {
+    Logger.log("ERROR al consultar calendario para estado: " + err);
+    return {ok:false, error:"No se pudo consultar el calendario"};
+  }
+
+  // Mapa { "YYYY-MM-DD": { "HEBA-101": {"manana": "Nombre", "tarde": "Nombre"} } }
+  var reservasPorDia = {};
+  var items = (eventos && eventos.items) || [];
+
+  for (var i = 0; i < items.length; i++) {
+    var ev = items[i];
+    var summary = String(ev.summary || "");
+    if (summary.indexOf("[HEBA-") === -1) continue;   // solo reservas de isla
+
+    var matchIsla = summary.match(/\[(HEBA-\d+)\]/);
+    if (!matchIsla) continue;
+
+    var inicio = ev.start && ev.start.dateTime;
+    if (!inicio) continue;   // eventos de día completo no aplican
+
+    var fecha = Utilities.formatDate(new Date(inicio), TIME_ZONE, "yyyy-MM-dd");
+    var hora  = Utilities.formatDate(new Date(inicio), TIME_ZONE, "HH");
+    var turno = (hora === "09") ? "manana" : ((hora === "14") ? "tarde" : "");
+    if (!turno) continue;
+
+    var partes = summary.split("·");
+    var nombre = partes.length > 1 ? partes[partes.length - 1].trim() : "";
+
+    if (!reservasPorDia[fecha]) reservasPorDia[fecha] = {};
+    if (!reservasPorDia[fecha][matchIsla[1]]) reservasPorDia[fecha][matchIsla[1]] = {};
+    reservasPorDia[fecha][matchIsla[1]][turno] = nombre;
+  }
+
+  return {
+    ok: true,
+    semanas: [
+      construirSemanaEstado("Semana actual", lunesStr, reservasPorDia),
+      construirSemanaEstado("Semana próxima", sumarDiasStr(lunesStr, 7), reservasPorDia)
+    ]
+  };
+}
+
+// Arma una semana hábil (Lun–Vie) con sus 5 fechas y las reservas de ese rango
+function construirSemanaEstado(etiqueta, lunesStr, reservasPorDia) {
+  var DIAS_LABEL = ["Lun", "Mar", "Mié", "Jue", "Vie"];
+  var dias = [];
+  var reservas = {};
+
+  for (var i = 0; i < 5; i++) {
+    var fecha = sumarDiasStr(lunesStr, i);
+    dias.push({fecha: fecha, diaLabel: DIAS_LABEL[i]});
+    if (reservasPorDia[fecha]) reservas[fecha] = reservasPorDia[fecha];
+  }
+
+  return {
+    etiqueta: etiqueta,
+    lunes: lunesStr,
+    dias: dias,
+    reservas: reservas
+  };
+}
+
+// Suma días a una fecha "YYYY-MM-DD" (aritmética UTC para evitar saltos de zona)
+function sumarDiasStr(fechaStr, dias) {
+  var partes = fechaStr.split("-");
+  var d = new Date(Date.UTC(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]) + dias));
+  return Utilities.formatDate(d, "UTC", "yyyy-MM-dd");
+}
+
+// Día de la semana ISO (1=Lun ... 7=Dom) de una fecha "YYYY-MM-DD"
+function diaDeSemanaISO(fechaStr) {
+  var partes = fechaStr.split("-");
+  var d = new Date(Date.UTC(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2])));
+  var dow = d.getUTCDay();   // 0=Dom ... 6=Sáb
+  return dow === 0 ? 7 : dow;
 }
 
 // ── Busca si la isla ya está reservada en ese rango horario ──

@@ -105,6 +105,23 @@
   .res-msg { font-size: 12px; margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
   .res-msg.ok  { display: block; background: rgba(0,229,200,.07); border: 1px solid rgba(0,229,200,.2); color: var(--teal); }
   .res-msg.err { display: block; background: rgba(255,77,77,.07); border: 1px solid rgba(255,77,77,.2); color: var(--red); }
+
+  /* ── ESTADO DE RESERVAS ── */
+  .estado-card { border-radius: 12px; }
+  .estado-head { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .estado-semana { margin-bottom: 28px; }
+  .estado-semana:last-child { margin-bottom: 0; }
+  .estado-semana-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .estado-semana-titulo { font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal); }
+  .estado-semana-rango { font-size: 12px; color: var(--muted); }
+  .estado-tabla { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 12px; }
+  .estado-tabla th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid #2a2a2a; }
+  .estado-tabla td { padding: 6px 8px; border: 1px solid #2a2a2a; border-radius: 8px; vertical-align: top; min-width: 92px; min-height: 40px; }
+  .estado-isla { font-weight: 700; color: var(--white); white-space: nowrap; }
+  .estado-libre { color: var(--muted); text-align: center; }
+  .estado-chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; border: 1px solid; margin: 1px 2px 1px 0; }
+  .estado-lleno-tag { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .estado-error { font-size: 13px; color: var(--red); }
 </style>
 </head>
 <body>
@@ -201,6 +218,22 @@
   </div>
 </section>
 
+<!-- ESTADO DE RESERVAS -->
+<section class="reservas-section" id="estado-reservas" style="padding-top:0;">
+  <div class="res-card estado-card">
+    <div class="estado-head">
+      <span style="font-size:34px;">📊</span>
+      <div>
+        <div class="res-title" style="font-size:22px;margin-bottom:6px;">Estado de<span>reservas</span></div>
+        <p class="res-desc" style="margin-bottom:0;">Semana actual y próxima — islas y turnos ocupados</p>
+      </div>
+    </div>
+    <div id="estado-grillas">
+      <p class="estado-cargando" style="font-size:13px;color:var(--muted);">Cargando estado de reservas…</p>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer style="padding:40px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
   <span style="font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--white);">HENRI BARRETT · SOCIAL CONTENT STUDIO</span>
@@ -216,6 +249,7 @@ var resShift = 'manana';
 
 function initReservas() {
   var sel = document.getElementById('res-nombre');
+  sel.innerHTML = '<option value="">Selecciona tu nombre</option>';   // vaciar antes de llenar (initReservas puede reintentarse por el retry de Google)
   RES_TEAM.forEach(function(p) {
     var o = document.createElement('option');
     o.value = p.name; o.textContent = p.name;
@@ -250,6 +284,12 @@ function initReservas() {
     setTimeout(initReservas, 300);
   } else {
     document.getElementById('g-btn').style.display = 'none';
+  }
+
+  // Panel de estado: cargar una sola vez (initReservas puede reintentarse)
+  if (!estadoCargado) {
+    estadoCargado = true;
+    cargarEstado();
   }
 }
 
@@ -305,6 +345,8 @@ function loadProyectos(name) {
         sel.innerHTML = '<option value="">Sin proyectos asignados</option>';
         return;
       }
+      // Ordenar alfabéticamente por nombre
+      lista.sort(function(a, b){ return a.name.localeCompare(b.name); });
       lista.forEach(function(p){
         var o = document.createElement('option');
         o.value = p.name; o.textContent = p.name;
@@ -404,11 +446,113 @@ function submitReserva(e) {
     document.getElementById('reserva-form').reset();
     document.getElementById('res-fecha').value = new Date().toISOString().split('T')[0];
     setShift('manana');
+    cargarEstado();   // refrescar la grilla de estado con la nueva reserva
   }).catch(function() {
     resetBtn();
     msg.className = 'res-msg err';
     msg.textContent = 'Error al crear la reserva. Intenta de nuevo.';
   });
+}
+
+// ── ESTADO DE RESERVAS ─────────────────────────────────────
+// Grilla semanal: filas = islas, columnas = Lun–Vie, chips = turno ocupado + editor.
+var COLORES_ESTADO_ISLA = {
+  'HEBA-101': '#a4bdfc',   // lavanda
+  'HEBA-102': '#d06b64',   // salmón
+  'HEBA-103': '#f7766a',   // flamenco
+  'HEBA-104': '#fbd75b',   // plátano
+  'HEBA-106': '#46d6db',   // pavo real
+  'HEBA-107': '#4986e7'    // arándano
+};
+var ISLAS_ESTADO = ['HEBA-101','HEBA-102','HEBA-103','HEBA-104','HEBA-106','HEBA-107'];
+var estadoCargado = false;
+
+function cargarEstado() {
+  if (RESERVAS_SCRIPT_URL === 'TU_RESERVAS_SCRIPT_URL_AQUI') {
+    pintarEstadoError('Conectá RESERVAS_SCRIPT_URL para ver el estado en vivo.');
+    return;
+  }
+  fetch(RESERVAS_SCRIPT_URL + '?accion=estado')
+    .then(function(r){ return r.json(); })
+    .then(function(data){ pintarEstado(data); })
+    .catch(function(){ pintarEstadoError('No se pudo consultar el estado de reservas.'); });
+}
+
+function pintarEstado(data) {
+  var cont = document.getElementById('estado-grillas');
+  if (!cont) return;
+  if (!data || data.ok === false) {
+    pintarEstadoError('No se pudo consultar el estado de reservas.');
+    return;
+  }
+  var html = '';
+  data.semanas.forEach(function(semana){
+    html += pintarSemanaEstado(semana);
+  });
+  cont.innerHTML = html || '<p style="font-size:13px;color:var(--muted);">Sin datos.</p>';
+}
+
+function pintarSemanaEstado(semana) {
+  var html = '<div class="estado-semana">';
+  html += '<div class="estado-semana-head">';
+  html += '<span class="estado-semana-titulo">' + semana.etiqueta + '</span>';
+  html += '<span class="estado-semana-rango">Semana del ' + semana.lunes + '</span>';
+  html += '</div>';
+  html += '<table class="estado-tabla"><thead><tr><th>Isla</th>';
+  semana.dias.forEach(function(d){
+    html += '<th>' + d.diaLabel + ' ' + diaNumero(d.fecha) + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  ISLAS_ESTADO.forEach(function(isla){
+    html += '<tr><td class="estado-isla">' + isla + '</td>';
+    semana.dias.forEach(function(d){
+      html += celdaEstadoHtml(d.fecha, isla, semana.reservas[d.fecha]);
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function celdaEstadoHtml(fecha, isla, reservasDia) {
+  var ocupacion = reservasDia ? reservasDia[isla] : null;
+  var color = COLORES_ESTADO_ISLA[isla] || '#888';
+  if (!ocupacion) {
+    return '<td class="estado-celda estado-libre">—</td>';
+  }
+  var chips = '';
+  if (ocupacion.manana) {
+    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">☀️ ' + escaparHtml(ocupacion.manana) + '</span>';
+  }
+  if (ocupacion.tarde) {
+    chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">🌤️ ' + escaparHtml(ocupacion.tarde) + '</span>';
+  }
+  var lleno = ocupacion.manana && ocupacion.tarde;
+  return '<td class="estado-celda" style="border-color:' + rgbaDeHex(color, 0.55) + ';background:' + rgbaDeHex(color, 0.06) + ';">' +
+         (lleno ? '<span class="estado-lleno-tag" style="color:' + color + ';">Día lleno</span>' : '') +
+         chips + '</td>';
+}
+
+function pintarEstadoError(mensaje) {
+  var cont = document.getElementById('estado-grillas');
+  if (cont) {
+    cont.innerHTML = '<p class="estado-error">' + escaparHtml(mensaje || 'No se pudo consultar el estado de reservas.') + '</p>';
+  }
+}
+
+function diaNumero(fechaStr) {
+  return fechaStr.split('-')[2];
+}
+
+function rgbaDeHex(hex, alpha) {
+  var r = parseInt(hex.substr(1, 2), 16);
+  var g = parseInt(hex.substr(3, 2), 16);
+  var b = parseInt(hex.substr(5, 2), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+function escaparHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 window.addEventListener('DOMContentLoaded', initReservas);
