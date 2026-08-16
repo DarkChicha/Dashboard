@@ -125,6 +125,20 @@
 </head>
 <body>
 
+<!-- LOGIN (solo dominio @henribarrett.com) -->
+<div id="login-screen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;">
+  <div style="text-align:center;max-width:420px;">
+    <div style="font-size:44px;margin-bottom:18px;">🖥️</div>
+    <div style="font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:8px;">Reserva de <span style="color:var(--teal);">Isla de Edición</span></div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:26px;">Acceso restringido al equipo. Iniciá sesión con tu correo de la agencia.</p>
+    <div id="g-btn-login" style="display:flex;justify-content:center;"></div>
+    <p id="login-deny" style="display:none;margin-top:18px;font-size:13px;font-weight:700;color:var(--red);">Acceso restringido: solo cuentas @henribarrett.com.</p>
+    <p id="login-loading" style="margin-top:18px;font-size:12px;color:var(--muted);">Cargando login de Google…</p>
+  </div>
+</div>
+
+<div id="app-content" style="display:none;">
+
 <!-- HEADER -->
 <header class="header">
   <div class="header-left">
@@ -239,10 +253,51 @@
   <span style="font-size:11px;color:var(--muted);">Uso interno · 2025</span>
 </footer>
 
+</div><!-- /app-content -->
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/reservas-team.js"></script>
 <script>
 var GOOGLE_CLIENT_ID    = '816877260952-a9062v4ppsprtfm0rsffjseau8dlcr7h.apps.googleusercontent.com';
 var RESERVAS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZDiYRN-EySmoQwQINnwW4Bl2u5INlVCwIlpdip2J0LaEvPiM7SxwfkQIvrTP46uX9/exec';
+
+/* ── LOGIN: solo dominio @henribarrett.com ── */
+function initLogin() {
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initLogin, 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredential,
+    auto_select: true,
+    cancel_on_tap_outside: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g-btn-login'),
+    { theme: 'filled_black', size: 'medium', text: 'signin', shape: 'pill' }
+  );
+  document.getElementById('login-loading').style.display = 'none';
+  google.accounts.id.prompt();
+}
+
+function handleCredential(response) {
+  try {
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    var email = payload.email || '';
+    if (email.indexOf('@henribarrett.com') > 0) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      initReservas();
+    } else {
+      document.getElementById('g-btn-login').style.display = 'none';
+      document.getElementById('login-deny').style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('g-btn-login').style.display = 'none';
+    document.getElementById('login-deny').style.display = 'block';
+  }
+}
 
 var resShift = 'manana';
 
@@ -256,34 +311,15 @@ function initReservas() {
     sel.appendChild(o);
   });
 
-  // Para la prueba: selector de nombres visible (sin login de Google).
-  // El botón de Google queda oculto; se activará cuando se defina el flujo final.
-  document.getElementById('g-btn').style.display = 'none';
+  // Acceso: login de Google con dominio @henribarrett.com (los datos son internos).
+  // El selector de nombres sigue visible para la prueba del miércoles; el login
+  // valida el dominio y auto-selecciona el nombre si el email está en el equipo.
 
   var today = new Date();
   document.getElementById('res-fecha').value =
     today.getFullYear() + '-' +
     String(today.getMonth()+1).padStart(2,'0') + '-' +
     String(today.getDate()).padStart(2,'0');
-
-  if (GOOGLE_CLIENT_ID !== 'TU_GOOGLE_CLIENT_ID_AQUI' && window.google) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredential,
-      auto_select: true,
-      cancel_on_tap_outside: false
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('g-btn'),
-      { theme: 'filled_black', size: 'medium', text: 'signin', shape: 'pill' }
-    );
-    google.accounts.id.prompt();
-  } else if (GOOGLE_CLIENT_ID !== 'TU_GOOGLE_CLIENT_ID_AQUI') {
-    // El script de Google aún se está cargando: reintentar en 300ms
-    setTimeout(initReservas, 300);
-  } else {
-    document.getElementById('g-btn').style.display = 'none';
-  }
 
   // Panel de estado: cargar una sola vez (initReservas puede reintentarse)
   if (!estadoCargado) {
@@ -568,7 +604,7 @@ function escaparHtml(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-window.addEventListener('DOMContentLoaded', initReservas);
+window.addEventListener('DOMContentLoaded', initLogin);
 </script>
 </body>
 </html>

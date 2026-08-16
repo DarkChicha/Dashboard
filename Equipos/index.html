@@ -225,6 +225,20 @@
 </head>
 <body>
 
+<!-- LOGIN (solo dominio @henribarrett.com) -->
+<div id="login-screen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;">
+  <div style="text-align:center;max-width:420px;">
+    <div style="font-size:44px;margin-bottom:18px;">🎥</div>
+    <div style="font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:8px;">Pedido de <span style="color:var(--orange);">Equipos AV</span></div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:26px;">Acceso restringido al equipo. Iniciá sesión con tu correo de la agencia.</p>
+    <div id="g-btn-login" style="display:flex;justify-content:center;"></div>
+    <p id="login-deny" style="display:none;margin-top:18px;font-size:13px;font-weight:700;color:var(--red);">Acceso restringido: solo cuentas @henribarrett.com.</p>
+    <p id="login-loading" style="margin-top:18px;font-size:12px;color:var(--muted);">Cargando login de Google…</p>
+  </div>
+</div>
+
+<div id="app-content" style="display:none;">
+
 <!-- HEADER -->
 <header class="header">
   <div class="header-left">
@@ -323,10 +337,54 @@
   <span class="footer-note">Uso interno · 2026</span>
 </footer>
 
+</div><!-- /app-content -->
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="equipos-data.js"></script>
 <script>
+/* Client ID de Google (mismo que Sorteo/Reservas — origen autorizado video-editorial.web.app) */
+var GOOGLE_CLIENT_ID = '816877260952-a9062v4ppsprtfm0rsffjseau8dlcr7h.apps.googleusercontent.com';
+
 /* EQUIPOS_SCRIPT_URL: Web App de Apps Script (deploy 2026-08-16) */
 var EQUIPOS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhrpCAkRejCZ8_nl0cDXy52dI3SBwA_eYWfTMC7K5_Cbzrix8C880mqK_Tw9eLelsn/exec';
+
+/* ── LOGIN: solo dominio @henribarrett.com ── */
+function initLogin() {
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initLogin, 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredential,
+    auto_select: true,
+    cancel_on_tap_outside: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g-btn-login'),
+    { theme: 'filled_black', size: 'medium', text: 'signin', shape: 'pill' }
+  );
+  document.getElementById('login-loading').style.display = 'none';
+  google.accounts.id.prompt();
+}
+
+function handleCredential(response) {
+  try {
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    var email = payload.email || '';
+    if (email.indexOf('@henribarrett.com') > 0) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      initEquipos();
+    } else {
+      document.getElementById('g-btn-login').style.display = 'none';
+      document.getElementById('login-deny').style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('g-btn-login').style.display = 'none';
+    document.getElementById('login-deny').style.display = 'block';
+  }
+}
 
 var ICONOS = { camaras:'📷', opticas:'🔭', luminaria:'💡', flash:'⚡', mod:'☂️', audio:'🎙️', grip:'🎞️', bateria:'🔋' };
 
@@ -634,7 +692,7 @@ function initEquipos() {
 
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
-window.addEventListener('DOMContentLoaded', initEquipos);
+window.addEventListener('DOMContentLoaded', initLogin);
 </script>
 </body>
 </html>
