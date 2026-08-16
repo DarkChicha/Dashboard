@@ -72,7 +72,7 @@ function crearReserva(payload) {
   // 3. Crear evento con el color de la isla
   var evento = {
     summary: payload.title,
-    description: (payload.descripcion || "") + "\nEditor: " + payload.nombre,
+    description: "Isla: " + payload.isla + "\nEditor: " + payload.nombre + (payload.descripcion ? "\n" + payload.descripcion : ""),
     start: {dateTime: payload.startDateTime, timeZone: TIME_ZONE},
     end:   {dateTime: payload.endDateTime, timeZone: TIME_ZONE},
     colorId: colorDeIsla(payload.isla)
@@ -105,6 +105,32 @@ var COLORES_ISLA = {
 };
 function colorDeIsla(isla) {
   return COLORES_ISLA[isla] || "3";
+}
+
+// ── Etiquetas visibles de islas (Pc01 = HEBA-102, Mac01 = HEBA-106, ...) ──
+// Mapeo oficial aprobado. El código interno HEBA-XXX se sigue usando en
+// validación, colores, descripción de eventos y claves del gráfico de estado.
+var ETIQUETAS_ISLA = {
+  "HEBA-102": "Pc01",
+  "HEBA-106": "Mac01",
+  "HEBA-107": "Pc02",
+  "HEBA-101": "Pc03",
+  "HEBA-103": "Pc05",
+  "HEBA-104": "Sr01"
+};
+function nombreIsla(heba) {
+  return ETIQUETAS_ISLA[heba] || heba;
+}
+
+// Extrae el código HEBA de un evento de reserva. Los eventos nuevos guardan la
+// isla en la descripción ("Isla: HEBA-XXX"); los viejos la llevan en el summary
+// ("[HEBA-XXX] ..."). Devuelve el código HEBA o null si no es una reserva de isla.
+function extraerIslaDeEvento(evento) {
+  var mDesc = String(evento.description || "").match(/Isla:\s*(HEBA-\d+)/);
+  if (mDesc) return mDesc[1];
+  var mSum = String(evento.summary || "").match(/\[(HEBA-\d+)\]/);
+  if (mSum) return mSum[1];
+  return null;
 }
 
 // ── obtenerEstadoReservas: grilla de la semana actual y la próxima ──
@@ -142,11 +168,8 @@ function obtenerEstadoReservas() {
 
   for (var i = 0; i < items.length; i++) {
     var ev = items[i];
-    var summary = String(ev.summary || "");
-    if (summary.indexOf("[HEBA-") === -1) continue;   // solo reservas de isla
-
-    var matchIsla = summary.match(/\[(HEBA-\d+)\]/);
-    if (!matchIsla) continue;
+    var isla = extraerIslaDeEvento(ev);
+    if (!isla) continue;   // solo reservas de isla (nuevas: description; viejas: summary)
 
     var inicio = ev.start && ev.start.dateTime;
     if (!inicio) continue;   // eventos de día completo no aplican
@@ -156,12 +179,12 @@ function obtenerEstadoReservas() {
     var turno = (hora === "09") ? "manana" : ((hora === "14") ? "tarde" : "");
     if (!turno) continue;
 
-    var partes = summary.split("·");
+    var partes = String(ev.summary || "").split("·");
     var nombre = partes.length > 1 ? partes[partes.length - 1].trim() : "";
 
     if (!reservasPorDia[fecha]) reservasPorDia[fecha] = {};
-    if (!reservasPorDia[fecha][matchIsla[1]]) reservasPorDia[fecha][matchIsla[1]] = {};
-    reservasPorDia[fecha][matchIsla[1]][turno] = nombre;
+    if (!reservasPorDia[fecha][isla]) reservasPorDia[fecha][isla] = {};
+    reservasPorDia[fecha][isla][turno] = nombre;
   }
 
   return {
@@ -227,13 +250,16 @@ function buscarConflicto(calId, payload) {
     return null;   // si no se puede consultar, no bloquear la reserva
   }
 
-  var islaTag = "[" + payload.isla + "]";
   var items = (eventos && eventos.items) || [];
   for (var i = 0; i < items.length; i++) {
     var ev = items[i];
-    if (String(ev.summary || "").indexOf(islaTag) !== -1) {
-      var otro = String(ev.summary || "").replace(islaTag, "").split("·")[0].trim();
-      return "La isla " + payload.isla + " ya está reservada en ese horario" +
+    // Eventos nuevos: la isla vive en la descripción ("Isla: HEBA-XXX").
+    // Eventos viejos: la isla vive en el summary ("[HEBA-XXX] ...").
+    var enDescripcion = String(ev.description || "").indexOf("Isla: " + payload.isla) !== -1;
+    var enSummary     = String(ev.summary || "").indexOf("[" + payload.isla + "]") !== -1;
+    if (enDescripcion || enSummary) {
+      var otro = String(ev.summary || "").replace("[" + payload.isla + "]", "").split("·")[0].trim();
+      return "La isla " + nombreIsla(payload.isla) + " ya está reservada en ese horario" +
              (otro ? " (" + otro + ")" : "") +
              ". Elegí otra isla u otro turno.";
     }

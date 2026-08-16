@@ -120,7 +120,6 @@
   .estado-isla { font-weight: 700; color: var(--white); white-space: nowrap; }
   .estado-libre { color: var(--muted); text-align: center; }
   .estado-chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; border: 1px solid; margin: 1px 2px 1px 0; }
-  .estado-lleno-tag { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
   .estado-error { font-size: 13px; color: var(--red); }
 </style>
 </head>
@@ -186,12 +185,12 @@
             <label class="f-label">Isla de Edición</label>
             <select class="f-select" id="res-isla">
               <option value="">Selecciona una isla</option>
-              <option value="HEBA-101">HEBA-101</option>
-              <option value="HEBA-102">HEBA-102</option>
-              <option value="HEBA-103">HEBA-103</option>
-              <option value="HEBA-104">HEBA-104</option>
-              <option value="HEBA-106">HEBA-106</option>
-              <option value="HEBA-107">HEBA-107</option>
+              <option value="HEBA-102">Pc01 (HEBA-102)</option>
+              <option value="HEBA-106">Mac01 (HEBA-106)</option>
+              <option value="HEBA-107">Pc02 (HEBA-107)</option>
+              <option value="HEBA-101">Pc03 (HEBA-101)</option>
+              <option value="HEBA-103">Pc05 (HEBA-103)</option>
+              <option value="HEBA-104">Sr01 (HEBA-104)</option>
             </select>
           </div>
         </div>
@@ -379,7 +378,7 @@ function buildReservaPayloads(nombre, fecha, proyecto, isla, desc) {
       horas: 4,   // ambos turnos son de 4 horas
       startDateTime: fecha + (esManana ? 'T09:00:00' : 'T14:00:00'),
       endDateTime:   fecha + (esManana ? 'T13:00:00' : 'T18:00:00'),
-      title: '[' + isla + '] ' + proyecto + ' · ' + (esManana ? 'Mañana' : 'Tarde') + ' · ' + nombre
+      title: proyecto + ' · Edit · ' + nombre
     };
   });
 }
@@ -464,7 +463,17 @@ var COLORES_ESTADO_ISLA = {
   'HEBA-106': '#46d6db',   // pavo real
   'HEBA-107': '#4986e7'    // arándano
 };
-var ISLAS_ESTADO = ['HEBA-101','HEBA-102','HEBA-103','HEBA-104','HEBA-106','HEBA-107'];
+var ETIQUETA_ISLA = {
+  'HEBA-102': 'Pc01',
+  'HEBA-106': 'Mac01',
+  'HEBA-107': 'Pc02',
+  'HEBA-101': 'Pc03',
+  'HEBA-103': 'Pc05',
+  'HEBA-104': 'Sr01'
+};
+// Orden visual aprobado: Pc01, Mac01, Pc02, Pc03, Pc05, Sr01
+// (se mantienen los códigos HEBA internos porque el backend responde con claves HEBA-XXX)
+var ISLAS_ESTADO = ['HEBA-102','HEBA-106','HEBA-107','HEBA-101','HEBA-103','HEBA-104'];
 var estadoCargado = false;
 
 function cargarEstado() {
@@ -504,7 +513,7 @@ function pintarSemanaEstado(semana) {
   });
   html += '</tr></thead><tbody>';
   ISLAS_ESTADO.forEach(function(isla){
-    html += '<tr><td class="estado-isla">' + isla + '</td>';
+    html += '<tr><td class="estado-isla">' + (ETIQUETA_ISLA[isla] || isla) + '</td>';
     semana.dias.forEach(function(d){
       html += celdaEstadoHtml(d.fecha, isla, semana.reservas[d.fecha]);
     });
@@ -527,9 +536,7 @@ function celdaEstadoHtml(fecha, isla, reservasDia) {
   if (ocupacion.tarde) {
     chips += '<span class="estado-chip" style="color:' + color + ';border-color:' + rgbaDeHex(color, 0.45) + ';background:' + rgbaDeHex(color, 0.12) + ';">🌤️ ' + escaparHtml(ocupacion.tarde) + '</span>';
   }
-  var lleno = ocupacion.manana && ocupacion.tarde;
   return '<td class="estado-celda" style="border-color:' + rgbaDeHex(color, 0.55) + ';background:' + rgbaDeHex(color, 0.06) + ';">' +
-         (lleno ? '<span class="estado-lleno-tag" style="color:' + color + ';">Día lleno</span>' : '') +
          chips + '</td>';
 }
 
