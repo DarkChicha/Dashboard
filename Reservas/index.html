@@ -146,7 +146,7 @@
       </div>
 
       <form id="reserva-form" onsubmit="submitReserva(event)">
-        <div class="f-group" style="display:none" id="res-nombre-group">
+        <div class="f-group">
           <label class="f-label">Nombre</label>
           <select class="f-select" id="res-nombre" onchange="onNameChange(this.value)">
             <option value="">Selecciona tu nombre</option>
@@ -222,6 +222,10 @@ function initReservas() {
     o.setAttribute('data-email', p.email);
     sel.appendChild(o);
   });
+
+  // Para la prueba: selector de nombres visible (sin login de Google).
+  // El botón de Google queda oculto; se activará cuando se defina el flujo final.
+  document.getElementById('g-btn').style.display = 'none';
 
   var today = new Date();
   document.getElementById('res-fecha').value =
@@ -374,17 +378,27 @@ function submitReserva(e) {
   }
 
   // Enviar cada reserva (1 turno → 1 POST; "Ambos" → 2 POSTs)
+  // Con CORS normal: podemos leer la respuesta y mostrar conflictos de horario.
   var envios = payloads.map(function(p) {
     return fetch(RESERVAS_SCRIPT_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify(p),
-      mode: 'no-cors'
-    });
+      mode: 'cors'
+    }).then(function(r){ return r.json(); });
   });
 
-  Promise.all(envios).then(function() {
+  Promise.all(envios).then(function(resultados) {
     resetBtn();
+    var error = null;
+    resultados.forEach(function(r){
+      if (r && r.ok === false && !error) error = r.error;
+    });
+    if (error) {
+      msg.className = 'res-msg err';
+      msg.textContent = error;
+      return;
+    }
     msg.className = 'res-msg ok';
     msg.textContent = payloads.length > 1 ? '✓ Ambos turnos creados en Google Calendar.' : '✓ Reserva creada en Google Calendar.';
     document.getElementById('reserva-form').reset();

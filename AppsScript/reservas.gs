@@ -49,22 +49,28 @@ function doPost(e) {
   }
 }
 
-// ── crearReserva: crea evento en Calendar (verde) + registra en Sheet ──
+// ── crearReserva: crea evento en Calendar + registra en Sheet ──
+// Valida conflicto (misma isla, mismo horario) antes de crear.
 function crearReserva(payload) {
   // 1. Validar isla
   if (ISLAS_VALIDAS.indexOf(payload.isla) === -1) {
     return {ok:false, error:"Isla no válida"};
   }
 
-  // 2. Crear evento con color verde vía Advanced Calendar Service
-  //    (CalendarApp normal no soporta asignar color al evento)
+  // 2. Validar que no exista otra reserva en la misma isla en ese horario
   var calId = getCalendarId(CALENDAR_ID);
+  var conflicto = buscarConflicto(calId, payload);
+  if (conflicto) {
+    return {ok:false, error: conflicto};
+  }
+
+  // 3. Crear evento con el color de la isla
   var evento = {
     summary: payload.title,
     description: (payload.descripcion || "") + "\nEditor: " + payload.nombre,
     start: {dateTime: payload.startDateTime, timeZone: TIME_ZONE},
     end:   {dateTime: payload.endDateTime, timeZone: TIME_ZONE},
-    colorId: "3"   // UVA (etiqueta "edit" configurada en el perfil del usuario)
+    colorId: colorDeIsla(payload.isla)
   };
 
   try {
@@ -74,11 +80,59 @@ function crearReserva(payload) {
     throw new Error("No se pudo crear el evento en Calendar: " + err);
   }
 
-  // 3. Registrar en la hoja "Registro de Edición"
+  // 4. Registrar en la hoja "Registro de Edición"
   var emailEditor = obtenerEmailEditor(payload.nombre);
   registrarEnSheet(payload, emailEditor);
 
   return {ok:true};
+}
+
+// ── Color de Google Calendar por isla (distinto para cada una) ──
+// colorIds de Google Calendar: 1 lavanda, 2 salmón, 3 uva, 4 flamenco,
+// 5 plátano, 6 mandarina, 7 pavo real, 8 grafito, 9 arándano, 10 verde, 11 tomate
+var COLORES_ISLA = {
+  "HEBA-101": "1",   // lavanda
+  "HEBA-102": "2",   // salmón
+  "HEBA-103": "4",   // flamenco
+  "HEBA-104": "5",   // plátano
+  "HEBA-106": "7",   // pavo real
+  "HEBA-107": "9"    // arándano
+};
+function colorDeIsla(isla) {
+  return COLORES_ISLA[isla] || "3";
+}
+
+// ── Busca si la isla ya está reservada en ese rango horario ──
+// Devuelve un mensaje de error si hay conflicto, o null si está libre.
+function buscarConflicto(calId, payload) {
+  var timeMin = payload.startDateTime;
+  var timeMax = payload.endDateTime;
+  var eventos;
+
+  try {
+    eventos = Calendar.Events.list(calId, {
+      timeMin: new Date(timeMin).toISOString(),
+      timeMax: new Date(timeMax).toISOString(),
+      singleEvents: true,
+      orderBy: "startTime"
+    });
+  } catch (err) {
+    Logger.log("ERROR al consultar eventos para conflicto: " + err);
+    return null;   // si no se puede consultar, no bloquear la reserva
+  }
+
+  var islaTag = "[" + payload.isla + "]";
+  var items = (eventos && eventos.items) || [];
+  for (var i = 0; i < items.length; i++) {
+    var ev = items[i];
+    if (String(ev.summary || "").indexOf(islaTag) !== -1) {
+      var otro = String(ev.summary || "").replace(islaTag, "").split("·")[0].trim();
+      return "La isla " + payload.isla + " ya está reservada en ese horario" +
+             (otro ? " (" + otro + ")" : "") +
+             ". Elegí otra isla u otro turno.";
+    }
+  }
+  return null;
 }
 
 // ── Resuelve el ID del calendario por nombre ────────────────
