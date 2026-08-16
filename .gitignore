@@ -18,6 +18,7 @@ dist-ssr
 !.env.example
 Sorteo/team-data.js
 reservas-team.js
+Equipos/equipos-data.js
 
 # Builds compilados (se regeneran con npm run build) — pueden contener keys inline
 Guiones/

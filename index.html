@@ -322,6 +322,21 @@
     border-radius: 4px;
   }
 
+  /* ── NUEVA BADGE ── */
+  .card-badge-nueva {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--card-accent, var(--lime));
+    color: var(--black);
+    padding: 4px 10px;
+    border-radius: 99px;
+  }
+
   @media (max-width: 640px) {
     .header { padding: 16px 20px; }
     .hero   { padding: 48px 20px 40px; }
@@ -358,7 +373,7 @@
   </p>
   <div class="hero-stats">
     <div class="stat-item">
-      <div class="stat-num">03</div>
+      <div class="stat-num">04</div>
       <div class="stat-label">Herramientas activas</div>
     </div>
     <div class="stat-item">
@@ -444,6 +459,29 @@
         <span class="tag">2 turnos</span>
         <span class="tag">Google Calendar</span>
         <span class="tag">Confirmación inmediata</span>
+      </div>
+      <div class="card-cta">Abrir herramienta →</div>
+    </a>
+
+    <!-- CARD 4: Pedido de Equipos AV -->
+    <a class="tool-card" href="/Equipos/" style="--card-accent: #FF8C42;">
+      <span class="card-badge-nueva">Nueva</span>
+      <div class="card-top">
+        <span class="card-index">04</span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <span class="card-icon">🎥</span>
+      <div class="card-title">
+        Pedido de
+        <span>Equipos AV</span>
+      </div>
+      <p class="card-desc">
+        Armá tu pedido de equipos para el rodaje: cámaras, ópticas, luces y audio. La solicitud queda en la carpeta del proyecto.
+      </p>
+      <div class="card-tags">
+        <span class="tag">Catálogo</span>
+        <span class="tag">Stock en vivo</span>
+        <span class="tag">Tech Rider</span>
       </div>
       <div class="card-cta">Abrir herramienta →</div>
     </a>
