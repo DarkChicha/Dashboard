@@ -283,6 +283,7 @@ function obtenerEmailEditor(nombre) {
 }
 
 // ── Registra la reserva en la hoja de cálculo ───────────────
+// Esquema nuevo (9 columnas): fecha, editor, email, proyecto, marca, isla, maquina, turno, solicitud
 function registrarEnSheet(payload, emailEditor) {
   var sheet = obtenerOCrearSheet();
   sheet.appendRow([
@@ -290,12 +291,11 @@ function registrarEnSheet(payload, emailEditor) {
     payload.nombre,
     emailEditor,
     payload.proyecto,
+    marcaDeProyecto(payload.proyecto),
     payload.isla,
+    nombreIsla(payload.isla),
     payload.turno,
-    payload.startDateTime,
-    payload.endDateTime,
-    payload.horas || 7,   // mañana=4, tarde=2 (viene del frontend)
-    new Date().toISOString()
+    Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd HH:mm:ss")
   ]);
 }
 
@@ -319,9 +319,61 @@ function obtenerOCrearSheet() {
 
   var sheet = spreadsheet.getActiveSheet();
   sheet.setName(SHEET_NAME);
-  sheet.appendRow(["fecha", "editor", "email", "proyecto", "isla", "turno", "inicio", "fin", "horas", "timestamp"]);
+  sheet.appendRow(["fecha", "editor", "email", "proyecto", "marca", "isla", "maquina", "turno", "solicitud"]);
 
   return sheet;
+}
+
+// ── Extrae la marca del proyecto: prefijo antes del primer "_" ──
+// Ej: "UPC_045_Nuevas_Carreras_Ingeniería" → "UPC"; "Henri Barrett HQ" → "Henri Barrett HQ"
+function marcaDeProyecto(proyecto) {
+  var idx = String(proyecto || "").indexOf("_");
+  return idx > 0 ? String(proyecto).substring(0, idx) : String(proyecto || "");
+}
+
+// ── TEST: migra la hoja del esquema viejo (10 cols) al nuevo (9 cols) ──
+// Ejecutar UNA VEZ a mano en el editor tras desplegar este código.
+// Viejo: fecha, editor, email, proyecto, isla, turno, inicio, fin, horas, timestamp
+// Nuevo: fecha, editor, email, proyecto, marca, isla, maquina, turno, solicitud
+function testMigrarSheet() {
+  var sheet = obtenerOCrearSheet();
+  var datos = sheet.getDataRange().getValues();
+  var headerNuevo = ["fecha", "editor", "email", "proyecto", "marca", "isla", "maquina", "turno", "solicitud"];
+
+  // Si el header actual ya empieza con "fecha" y contiene "marca", ya está migrada
+  if (datos.length > 0 && String(datos[0][0] || "") === "fecha" && datos[0].indexOf("marca") !== -1) {
+    Logger.log("Ya migrada");
+    return "OK";
+  }
+
+  var filasNuevas = [];
+  for (var i = 1; i < datos.length; i++) {
+    var fila = datos[i];
+    var solicitud = "";
+    try {
+      var dTs = new Date(fila[9]);   // timestamp viejo (ISO)
+      if (isNaN(dTs.getTime())) throw new Error("timestamp vacío");
+      solicitud = Utilities.formatDate(dTs, TIME_ZONE, "yyyy-MM-dd HH:mm:ss");
+    } catch (err) {
+      solicitud = Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd HH:mm:ss");
+    }
+    filasNuevas.push([
+      fila[0],                  // fecha
+      fila[1],                  // editor
+      fila[2],                  // email
+      fila[3],                  // proyecto
+      marcaDeProyecto(fila[3]), // marca
+      fila[4],                  // isla
+      nombreIsla(fila[4]),      // maquina
+      fila[5],                  // turno
+      solicitud                 // solicitud
+    ]);
+  }
+
+  sheet.clear();
+  sheet.getRange(1, 1, filasNuevas.length + 1, 9).setValues([headerNuevo].concat(filasNuevas));
+  Logger.log("Migradas " + filasNuevas.length + " filas al nuevo esquema");
+  return "OK";
 }
 
 // ── listarProyectosDe: proyectos Basecamp donde la persona es miembro ──
