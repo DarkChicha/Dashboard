@@ -688,6 +688,22 @@ function initEquipos() {
   pintarCatbar();
   pintarGrid();
   pintarCart();
+
+  // Inventario desde el backend (fuente de verdad = hoja "Inventario" del sheet).
+  // Si el backend falla, se mantienen los datos locales de equipos-data.js.
+  if (EQUIPOS_SCRIPT_URL.indexOf('PEGA_') !== 0) {
+    fetch(EQUIPOS_SCRIPT_URL + '?accion=inventario')
+      .then(function(r){ return r.json(); })
+      .then(function(res) {
+        if (res && res.ok && res.equipos && res.equipos.length) {
+          EQUIPOS = res.equipos;
+          pintarCatbar();
+          pintarGrid();
+          pintarCart();
+        }
+      })
+      .catch(function() { /* fallback: datos locales */ });
+  }
 }
 
 function pad2(n) { return (n < 10 ? '0' : '') + n; }

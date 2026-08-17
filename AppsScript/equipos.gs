@@ -7,6 +7,9 @@
 var TIME_ZONE   = "America/Lima";           // zona horaria de fechas y timestamps
 var CARPETA_DOC = "Solicitud de Equipos";   // carpeta de Drive donde se guardan los pedidos
 var SHEET_NAME  = "Registro Pedidos AV";    // hoja de registro de pedidos
+var INVENTARIO_SHEET_ID = "PEGA_INVENTARIO_SHEET_ID"; // ID del spreadsheet de inventario (se reemplaza al deploy)
+var INVENTARIO_HOJA     = "Inventario";     // hoja con el catálogo (fuente de verdad)
+var INVENTARIO_CACHE_MS = 5 * 60 * 1000;    // caché del inventario: 5 minutos
 
 // EQUIPOS_TEAM: copia de Equipos/equipos-data.js del repo. NO se versiona con
 // emails reales, el orquestador pega el contenido real al momento del deploy
@@ -19,7 +22,85 @@ var EQUIPOS_TEAM = [
 
 // ── Rutas ───────────────────────────────────────────────────
 function doGet(e) {
-  return responderJSON({ok:false, error:"Usa POST"});
+  var accion = e && e.parameter && e.parameter.accion;
+  if (accion === "inventario") {
+    return responderJSON(obtenerInventario());
+  }
+  return responderJSON({ok:false, error:"Usa POST o ?accion=inventario"});
+}
+
+// ── Inventario (fuente de verdad = hoja "Inventario" del spreadsheet) ──
+// Columnas de la hoja: categoria | marca | modelo | stock | notas
+// Devuelve {ok:true, equipos:[{cat, id, nombre, stock, tags:[notas]}]}
+function obtenerInventario() {
+  var props = PropertiesService.getScriptProperties();
+  var cache = props.getProperty("INVENTARIO_CACHE");
+  var cacheTs = props.getProperty("INVENTARIO_CACHE_TS");
+  if (cache && cacheTs && (Date.now() - Number(cacheTs)) < INVENTARIO_CACHE_MS) {
+    try { return JSON.parse(cache); } catch (err) { /* caché corrupta: releer */ }
+  }
+
+  try {
+    var ss = SpreadsheetApp.openById(INVENTARIO_SHEET_ID);
+    var hoja = ss.getSheetByName(INVENTARIO_HOJA);
+    if (!hoja) {
+      return {ok:false, error:"No existe la hoja '" + INVENTARIO_HOJA + "' en el spreadsheet de inventario."};
+    }
+    var filas = hoja.getDataRange().getValues();
+    if (filas.length < 2) {
+      return {ok:true, equipos:[]}; // solo header
+    }
+
+    var header = filas[0].map(function(h){ return String(h).toLowerCase().trim(); });
+    var idxCat = header.indexOf("categoria");
+    var idxMar = header.indexOf("marca");
+    var idxMod = header.indexOf("modelo");
+    var idxSto = header.indexOf("stock");
+    var idxNot = header.indexOf("notas");
+    var idxId  = header.indexOf("id");
+    if (idxCat < 0 || idxMar < 0 || idxMod < 0 || idxSto < 0) {
+      return {ok:false, error:"La hoja 'Inventario' debe tener columnas: categoria, marca, modelo, stock."};
+    }
+
+    var equipos = [];
+    for (var i = 1; i < filas.length; i++) {
+      var f = filas[i];
+      var categoria = String(f[idxCat] || "").trim();
+      var marca     = String(f[idxMar] || "").trim();
+      var modelo    = String(f[idxMod] || "").trim();
+      var stock     = Number(f[idxSto]) || 0;
+      if (!categoria || !modelo) continue; // fila incompleta (marca puede ser "")
+
+      var nombre = (marca + " " + modelo).trim();
+      var id = (idxId >= 0 && String(f[idxId] || "").trim())
+        ? String(f[idxId]).trim()
+        : normalizarId(marca + " " + modelo);
+      var notas = (idxNot >= 0) ? String(f[idxNot] || "").trim() : "";
+
+      equipos.push({
+        cat: categoria,
+        id: id,
+        nombre: nombre,
+        stock: stock,
+        tags: notas ? [notas] : []
+      });
+    }
+
+    var respuesta = {ok:true, equipos:equipos};
+    props.setProperty("INVENTARIO_CACHE", JSON.stringify(respuesta));
+    props.setProperty("INVENTARIO_CACHE_TS", String(Date.now()));
+    return respuesta;
+  } catch (err) {
+    Logger.log("ERROR leyendo inventario: " + err);
+    return {ok:false, error:"No se pudo leer el inventario: " + err};
+  }
+}
+
+// Convierte "Sony 24-70 GM" → "Sony2470GM" (id estable para el carrito)
+function normalizarId(s) {
+  return String(s || "").toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .replace(/(\d+)-(\d+)/g, function(m, a, b){ return a + b; });
 }
 
 function doPost(e) {
@@ -189,4 +270,35 @@ function obtenerEmailDe(nombre) {
 function responderJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── TEST: crear hoja "Inventario" con el contenido inicial ──
+// Ejecutar UNA vez desde el editor (▶️) tras configurar INVENTARIO_SHEET_ID.
+// Pega los datos iniciales del catálogo (los 59 equipos normalizados).
+function testCrearHojaInventario() {
+  var ss = SpreadsheetApp.openById(INVENTARIO_SHEET_ID);
+  var hoja = ss.getSheetByName(INVENTARIO_HOJA);
+  if (hoja) {
+    Logger.log("La hoja '" + INVENTARIO_HOJA + "' ya existe — no se sobrescribe.");
+    return "EXISTE";
+  }
+  hoja = ss.insertSheet(INVENTARIO_HOJA);
+  var datos = PEGA_INVENTARIO_INICIAL; // array [[categoria,marca,modelo,stock,notas], ...]
+  var filas = [["categoria","marca","modelo","stock","notas"]].concat(datos);
+  hoja.getRange(1, 1, filas.length, 5).setValues(filas);
+  hoja.getRange(1, 1, 1, 5).setFontWeight("bold");
+  hoja.setFrozenRows(1);
+  Logger.log("Hoja '" + INVENTARIO_HOJA + "' creada con " + datos.length + " equipos.");
+  // Limpiar caché para que el frontend vea los datos nuevos
+  PropertiesService.getScriptProperties().deleteProperty("INVENTARIO_CACHE");
+  PropertiesService.getScriptProperties().deleteProperty("INVENTARIO_CACHE_TS");
+  return "OK";
+}
+
+// ── TEST: limpiar caché del inventario (tras editar el sheet) ──
+function testLimpiarCacheInventario() {
+  PropertiesService.getScriptProperties().deleteProperty("INVENTARIO_CACHE");
+  PropertiesService.getScriptProperties().deleteProperty("INVENTARIO_CACHE_TS");
+  Logger.log("Caché de inventario limpiada — el próximo ?accion=inventario relee el sheet.");
+  return "OK";
 }
