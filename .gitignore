@@ -22,6 +22,8 @@ Equipos/equipos-data.js
 
 # Builds compilados (se regeneran con npm run build) — pueden contener keys inline
 Guiones/
+# BS-015 (Cámara + Manos): build estático generado desde el repo visualflow (DarkChicha/visualflow)
+BS-015/
 
 # Cachés locales de Firebase (se regeneran con deploy)
 .firebase/
